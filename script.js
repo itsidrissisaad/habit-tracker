@@ -1497,3 +1497,22 @@ class HabitTrackerApp {
 
 // Global Tracker Instance
 const tracker = new HabitTrackerApp();
+
+async function loadHabitsFromSupabase() {
+    try {
+        const { data, error } = await supabase.from('habits').select('*');
+        if (error) throw error;
+
+        console.log("Successfully fetched habits from Supabase:", data);
+        
+        // Update your tracker instance state and re-render the UI
+        tracker.habits = data;
+        tracker.render();
+        
+    } catch (err) {
+        console.error("Error fetching habits:", err.message);
+    }
+}
+
+// Call it to fetch and load your habits on startup
+loadHabitsFromSupabase();
