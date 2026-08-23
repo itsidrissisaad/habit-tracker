@@ -1248,47 +1248,71 @@ class HabitTrackerApp {
         document.getElementById('habitModal')?.classList.remove('show');
     }
 
-    handleHabitSubmit(e) {
+    async handleHabitSubmit(e) {
         e.preventDefault();
 
-        const editId = document.getElementById('editHabitId').value;
-        const name = document.getElementById('habitName').value.trim();
-        const description = document.getElementById('habitDescription').value.trim();
-        const category = document.getElementById('habitCategorySelect').value;
-        const frequency = document.getElementById('habitFrequency').value;
-        const color = document.getElementById('habitColor').value;
+        const editId = document.getElementById('editHabitId')?.value;
+        const name = document.getElementById('habitName')?.value.trim();
+        const description = document.getElementById('habitDescription')?.value.trim();
+        const category = document.getElementById('habitCategorySelect')?.value;
+        const frequency = document.getElementById('habitFrequency')?.value;
+        const color = document.getElementById('habitColor')?.value;
 
         if (!name) return;
 
-        if (editId) {
-            const habit = this.habits.find(h => h.id === Number(editId));
-            if (habit) {
-                habit.name = name;
-                habit.description = description;
-                habit.category = category;
-                habit.frequency = frequency;
-                habit.color = color;
-                this.showToast(`Updated habit "${name}"`, 'success');
-            }
-        } else {
-            const newHabit = {
-                id: Date.now(),
-                name,
-                description,
-                category,
-                frequency,
-                color,
-                createdAt: this.getTodayStr(),
-                completions: []
-            };
-            this.habits.unshift(newHabit);
-            this.showToast(`Created habit "${name}"!`, 'success');
-            this.triggerConfetti();
-        }
+        try {
+            // Get the current authenticated user session
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError) throw userError;
+            if (!user) throw new Error("No active user session found.");
 
-        this.saveHabits();
-        this.closeHabitModal();
-        this.render();
+            // Check if category is a valid UUID, otherwise set to null
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            const validCategoryId = uuidRegex.test(category) ? category : null;
+
+            if (editId) {
+                // If editing an existing habit
+                const { error } = await supabase
+                    .from('habits')
+                    .update({
+                        name,
+                        description: description || null,
+                        category_id: validCategoryId,
+                        frequency: frequency || 'daily',
+                        color: color || '#4F46E5'
+                    })
+                    .eq('id', editId);
+
+                if (error) throw error;
+                this.showToast(`Updated habit "${name}"`, 'success');
+            } else {
+                // If creating a brand new habit
+                const { error } = await supabase
+                    .from('habits')
+                    .insert([
+                        {
+                            user_id: user.id,
+                            name,
+                            description: description || null,
+                            category_id: validCategoryId,
+                            frequency: frequency || 'daily',
+                            color: color || '#4F46E5'
+                        }
+                    ]);
+
+                if (error) throw error;
+                this.showToast(`Created habit "${name}"`, 'success');
+            }
+
+            // Close the modal, reset the form, and refresh habits from Supabase
+            this.closeHabitModal();
+            document.getElementById('habitForm')?.reset();
+            fetchHabitsFromSupabase();
+
+        } catch (err) {
+            console.error("Error saving habit:", err.message);
+            this.showToast(`Error: ${err.message}`, 'error');
+        }
     }
 
     editHabit(id) {
@@ -1497,7 +1521,7 @@ class HabitTrackerApp {
 
 // Global Tracker Instance
 const tracker = new HabitTrackerApp();
-
+window.tracker = tracker;
 async function fetchHabitsFromSupabase() {
     try {
         const { data, error } = await supabase.from('habits').select('*');
@@ -1513,4 +1537,27 @@ async function fetchHabitsFromSupabase() {
     }
 }
 
-fetchHabitsFromSupabase();
+
+
+// Initialize Supabase Auth session anonymously if not already signed in
+async function initSupabaseAuth() {
+    try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        if (!session) {
+            const { data, error: signInError } = await supabase.auth.signInAnonymously();
+            if (signInError) throw signInError;
+            console.log("Signed in anonymously:", data.user.id);
+        } else {
+            console.log("Active Supabase session found:", session.user.id);
+        }
+    } catch (err) {
+        console.error("Auth initialization error:", err.message);
+    }
+}
+
+// Run auth initialization, then fetch your habits
+initSupabaseAuth().then(() => {
+    fetchHabitsFromSupabase();
+});
