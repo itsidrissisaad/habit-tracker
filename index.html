@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Habit Tracker</h1>
+            <p class="quote" id="quote">Stay disciplined, stay strong.</p>
+        </header>
+
+        <!-- Add Habit Form -->
+        <section class="add-habit-section">
+            <button class="btn-add" id="addHabitBtn">+ Add New Habit</button>
+            
+            <!-- Hidden form (will show when + Add is clicked) -->
+            <form class="form-add-habit hidden" id="habitForm">
+                <input 
+                    type="text" 
+                    id="habitName" 
+                    placeholder="Habit name (e.g., Read 30 min)" 
+                    required
+                >
+                <input 
+                    type="text" 
+                    id="habitDescription" 
+                    placeholder="Description (optional)"
+                >
+                <select id="habitFrequency" required>
+                    <option value="">Select frequency</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-submit">Add Habit</button>
+                    <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Habits List -->
+        <section class="habits-section">
+            <h2>Your Habits</h2>
+            <div class="habits-list" id="habitsList">
+                <!-- Habits will be dynamically added here -->
+                <p class="empty-state">No habits yet. Click "+ Add New Habit" to get started!</p>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section class="analytics-section">
+            <button class="btn-analytics" id="analyticsBtn">📊 View Analytics</button>
+        </section>
+    </div>
+
+    <!-- Analytics Modal (hidden by default) -->
+    <div class="modal hidden" id="analyticsModal">
+        <div class="modal-content">
+            <button class="btn-close" id="closeAnalyticsBtn">&times;</button>
+            <h2>Analytics</h2>
+            <div class="analytics-details" id="analyticsDetails">
+                <!-- Analytics will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
