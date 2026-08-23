@@ -283,6 +283,44 @@ class HabitTrackerApp {
     }
 
     /* --------------------------------------------------------------------------
+       SEARCH HELPERS (ESCAPE & HIGHLIGHT)
+       -------------------------------------------------------------------------- */
+    escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, function(m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[m];
+        });
+    }
+
+    highlightMatch(text, query) {
+        if (!text || !query) return this.escapeHtml(text);
+        const safeText = this.escapeHtml(text);
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+        return safeText.replace(regex, '<mark class="search-highlight">$1</mark>');
+    }
+
+    clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
+        }
+        if (clearSearchBtn) {
+            clearSearchBtn.style.display = 'none';
+        }
+        this.searchQuery = '';
+        this.renderHabitsGrid();
+    }
+
+    /* --------------------------------------------------------------------------
        EVENT LISTENERS & UI WIRING
        -------------------------------------------------------------------------- */
     setupEventListeners() {
@@ -337,24 +375,53 @@ class HabitTrackerApp {
             });
         }
 
-        // Search Box
+        // Search Box Wiring (Real-time live search)
         const searchInput = document.getElementById('searchInput');
         const clearSearchBtn = document.getElementById('clearSearchBtn');
+
         if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
+            const handleSearch = (e) => {
                 this.searchQuery = e.target.value.toLowerCase().trim();
-                if (clearSearchBtn) clearSearchBtn.style.display = this.searchQuery ? 'block' : 'none';
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = this.searchQuery ? 'inline-flex' : 'none';
+                }
                 this.renderHabitsGrid();
+            };
+
+            searchInput.addEventListener('input', handleSearch);
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Escape') {
+                    this.clearSearch();
+                    searchInput.blur();
+                } else {
+                    handleSearch(e);
+                }
+            });
+            searchInput.addEventListener('search', handleSearch);
+            searchInput.addEventListener('paste', () => {
+                setTimeout(() => handleSearch({ target: searchInput }), 10);
             });
         }
+
         if (clearSearchBtn) {
             clearSearchBtn.addEventListener('click', () => {
-                if (searchInput) searchInput.value = '';
-                this.searchQuery = '';
-                clearSearchBtn.style.display = 'none';
-                this.renderHabitsGrid();
+                this.clearSearch();
             });
         }
+
+        // Global Shortcut: Press '/' or 'Ctrl+K' / 'Cmd+K' to focus search
+        document.addEventListener('keydown', (e) => {
+            const tag = (document.activeElement?.tagName || '').toUpperCase();
+            if ((e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') ||
+                ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+                e.preventDefault();
+                const searchEl = document.getElementById('searchInput');
+                if (searchEl) {
+                    searchEl.focus();
+                    searchEl.select();
+                }
+            }
+        });
 
         // Frequency Filter
         const freqContainer = document.getElementById('frequencyFilters');
@@ -914,17 +981,39 @@ class HabitTrackerApp {
 
     getFilteredHabits() {
         const todayStr = this.getTodayStr();
+        const query = this.searchQuery;
 
         return this.habits.filter(habit => {
-            if (this.selectedCategory !== 'all' && habit.category !== this.selectedCategory) return false;
-            if (this.selectedFrequency !== 'all' && habit.frequency !== this.selectedFrequency) return false;
-            if (this.selectedStatus === 'pending' && habit.completions.includes(todayStr)) return false;
-            if (this.selectedStatus === 'completed' && !habit.completions.includes(todayStr)) return false;
-            if (this.searchQuery) {
-                const nameMatch = habit.name.toLowerCase().includes(this.searchQuery);
-                const descMatch = (habit.description || '').toLowerCase().includes(this.searchQuery);
-                if (!nameMatch && !descMatch) return false;
+            // If active search query: match against name, description, category, or frequency
+            if (query) {
+                const nameMatch = (habit.name || '').toLowerCase().includes(query);
+                const descMatch = (habit.description || '').toLowerCase().includes(query);
+                const catMatch = (habit.category || '').toLowerCase().includes(query);
+                const freqMatch = (habit.frequency || '').toLowerCase().includes(query);
+
+                if (!nameMatch && !descMatch && !catMatch && !freqMatch) {
+                    return false;
+                }
             }
+
+            // Category filter
+            if (this.selectedCategory !== 'all' && habit.category !== this.selectedCategory) {
+                return false;
+            }
+
+            // Frequency filter
+            if (this.selectedFrequency !== 'all' && habit.frequency !== this.selectedFrequency) {
+                return false;
+            }
+
+            // Status filter
+            if (this.selectedStatus === 'pending' && habit.completions.includes(todayStr)) {
+                return false;
+            }
+            if (this.selectedStatus === 'completed' && !habit.completions.includes(todayStr)) {
+                return false;
+            }
+
             return true;
         }).sort((a, b) => {
             if (this.sortOrder === 'streak') return this.calculateStreak(b) - this.calculateStreak(a);
@@ -944,30 +1033,52 @@ class HabitTrackerApp {
         const filtered = this.getFilteredHabits();
         if (countBadge) countBadge.textContent = filtered.length.toString();
 
-        // Clean & Welcoming Empty State
+        // Empty state handling
         if (filtered.length === 0) {
-            grid.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon-box">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
+            if (this.searchQuery) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon-box">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        </div>
+                        <h3>No habits found matching "${this.escapeHtml(this.searchQuery)}"</h3>
+                        <p>We couldn't find any habits matching your search query. Try another term or clear your search.</p>
+                        <div class="empty-state-actions">
+                            <button class="btn btn-secondary" onclick="tracker.clearSearch()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                <span>Clear Search</span>
+                            </button>
+                            <button class="btn btn-primary" onclick="tracker.openHabitModalWithName('${this.escapeHtml(this.searchQuery)}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>Create "${this.escapeHtml(this.searchQuery)}"</span>
+                            </button>
+                        </div>
                     </div>
-                    <h3>${this.habits.length === 0 ? 'Your habit board is clean and ready' : 'No habits match your filters'}</h3>
-                    <p>${this.habits.length === 0 ? 'Start tracking your daily goals, build momentum, and master consistency. Add your first habit or pick a starter idea.' : 'Try clearing your search or switching category filters to see your habits.'}</p>
-                    <div class="empty-state-actions">
-                        <button class="btn btn-primary" onclick="tracker.openHabitModal()">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            <span>Create First Habit</span>
-                        </button>
-                        ${this.habits.length === 0 ? `
-                        <button class="btn btn-secondary" onclick="tracker.loadSampleData()">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            <span>Load Sample Habits</span>
-                        </button>` : ''}
+                `;
+            } else {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon-box">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                            </svg>
+                        </div>
+                        <h3>${this.habits.length === 0 ? 'Your habit board is clean and ready' : 'No habits match your filters'}</h3>
+                        <p>${this.habits.length === 0 ? 'Start tracking your daily goals, build momentum, and master consistency. Add your first habit or pick a starter idea.' : 'Try switching category filters or frequency to view your habits.'}</p>
+                        <div class="empty-state-actions">
+                            <button class="btn btn-primary" onclick="tracker.openHabitModal()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>Create First Habit</span>
+                            </button>
+                            ${this.habits.length === 0 ? `
+                            <button class="btn btn-secondary" onclick="tracker.loadSampleData()">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                <span>Load Sample Habits</span>
+                            </button>` : ''}
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
             return;
         }
 
@@ -980,6 +1091,10 @@ class HabitTrackerApp {
             const catObj = this.categories.find(c => c.name === habit.category) || { name: habit.category, icon: 'target', color: '#4f46e5' };
             const iconSvg = SVG_ICONS[catObj.icon] || SVG_ICONS['target'];
             const cardAccent = habit.color || catObj.color;
+
+            // Highlight matches if search active
+            const displayName = this.searchQuery ? this.highlightMatch(habit.name, this.searchQuery) : this.escapeHtml(habit.name);
+            const displayDesc = habit.description ? (this.searchQuery ? this.highlightMatch(habit.description, this.searchQuery) : this.escapeHtml(habit.description)) : '';
 
             // Generate 7-day strip HTML
             const stripHtml = rollingDays.map(day => {
@@ -999,11 +1114,11 @@ class HabitTrackerApp {
                 <div class="habit-card ${isCompletedToday ? 'is-completed' : ''}" style="--card-accent: ${cardAccent};">
                     <div class="habit-header">
                         <div class="habit-title-group">
-                            <h3 class="habit-name">${habit.name}</h3>
-                            ${habit.description ? `<p class="habit-desc">${habit.description}</p>` : ''}
+                            <h3 class="habit-name">${displayName}</h3>
+                            ${displayDesc ? `<p class="habit-desc">${displayDesc}</p>` : ''}
                             <div class="habit-meta-row">
                                 <span class="category-tag" style="--tag-bg: ${catObj.color}15; --tag-color: ${catObj.color};">
-                                    ${iconSvg} ${habit.category}
+                                    ${iconSvg} ${this.escapeHtml(habit.category)}
                                 </span>
                                 <span class="freq-tag">${habit.frequency}</span>
                             </div>
@@ -1116,6 +1231,15 @@ class HabitTrackerApp {
 
         modal.classList.add('show');
         document.getElementById('habitName')?.focus();
+    }
+
+    openHabitModalWithName(presetName) {
+        this.openHabitModal();
+        const nameInput = document.getElementById('habitName');
+        if (nameInput) {
+            nameInput.value = presetName;
+            nameInput.focus();
+        }
     }
 
     closeHabitModal() {
@@ -1414,7 +1538,7 @@ class HabitTrackerApp {
             return `
                 <div class="breakdown-item">
                     <div class="breakdown-top">
-                        <span class="breakdown-title">${habit.name}</span>
+                        <span class="breakdown-title">${this.escapeHtml(habit.name)}</span>
                         <span class="breakdown-stats">Streak: ${streak}d | Best: ${bestStreak}d | ${habit.completions.length} check-ins</span>
                     </div>
                     <div class="breakdown-bar-track">

@@ -254,18 +254,36 @@ html, body {
 
 .clear-search-btn {
     position: absolute;
-    right: 10px;
-    background: none;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-muted);
     border: none;
-    color: var(--text-light);
-    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: 700;
     cursor: pointer;
     display: none;
     line-height: 1;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
 }
 
 .clear-search-btn:hover {
     color: var(--text-main);
+    background-color: #cbd5e1;
+}
+
+mark.search-highlight {
+    background-color: #fef08a;
+    color: #854d0e;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-weight: 700;
 }
 
 /* User Profile & Avatar Menu */
