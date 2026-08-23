@@ -1,3 +1,16 @@
+import { supabase } from './supabaseClient.js';
+async function loadHabitsFromSupabase() {
+  try {
+    const { data, error } = await supabase.from('habits').select('*');
+    if (error) throw error;
+    
+    console.log('Successfully fetched habits from Supabase:', data);
+    // TODO: Pass this data into your local rendering functions so they appear on screen!
+  } catch (err) {
+    console.error('Error fetching habits:', err.message);
+  }
+}
+
 /**
  * Habit Tracker - Core Application Engine
  * Pure Vanilla JavaScript / Modern Browser Standard
@@ -74,6 +87,8 @@ class HabitTrackerApp {
         this.setupConfetti();
         this.updateUserGreeting();
         this.render();
+
+        loadHabitsFromSupabase();
     }
 
     /* --------------------------------------------------------------------------
