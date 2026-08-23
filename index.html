@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Habit Tracker | Build Consistency & Daily Mastery</title>
     <meta name="description" content="A modern, professional habit tracker with customizable categories, streak insights, activity heatmaps, and seamless dashboard management.">
     <!-- Favicon — matches the dashboard brand logo -->
@@ -51,17 +51,16 @@
                 </div>
             </div>
 
-            <div class="header-right">
-                <!-- Search Bar -->
-                <div class="search-box">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Search habits..." aria-label="Search habits">
-                    <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search">&times;</button>
-                </div>
+            <div class="search-box">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search habits..." aria-label="Search habits">
+                <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search">&times;</button>
+            </div>
 
+            <div class="header-right">
                 <!-- Quick Action Buttons -->
                 <button class="btn btn-secondary" id="analyticsBtn" title="View Detailed Analytics">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

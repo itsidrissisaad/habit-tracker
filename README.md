@@ -29,6 +29,7 @@
   <img src="https://img.shields.io/badge/Theme-Light_Mode_SaaS-4F46E5?style=flat-square" alt="Light Theme">
   <img src="https://img.shields.io/badge/Auth-Login_%26_Sign_Up-7C3AED?style=flat-square" alt="Auth">
   <img src="https://img.shields.io/badge/Icons-12%2B_Vector_SVG-06B6D4?style=flat-square" alt="SVG Icons">
+  <img src="https://img.shields.io/badge/Responsive-Mobile_Tablet_Desktop-06B6D4?style=flat-square" alt="Responsive">
   <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="MIT License">
 </p>
 
@@ -51,7 +52,9 @@
 - Sign in to restore your personalized session
 - Continue as **Guest** without any commitment
 - Dynamic greeting adapts by time of day — *"Good morning, Alex! 👋"*
-- Persistent local session via `localStorage`
+- Rotating motivational quote in the header
+- Account menu: manage categories, clear all habits, sign in / switch account
+- Persistent local session via `localStorage` (client-side only — no backend)
 
 ---
 
@@ -60,6 +63,7 @@
 - Choose from **12+ professional vector SVG icons** (no emojis — clean and scalable at any resolution)
 - Assign a custom color accent per category
 - Live habit count badges per category in the sidebar
+- Default starter categories: Health & Fitness, Productivity, Learning, Mindfulness, Finance
 
 | Icon | Name | Icon | Name |
 |------|------|------|------|
@@ -82,6 +86,27 @@
 
 ### 🗓️ Interactive 7-Day Rolling Check Strip
 Each habit card features a built-in 7-day calendar strip. Tap any day to retroactively log or unlog completions — past days, or today.
+
+Habit cards also support:
+- Create, edit, and delete
+- Per-habit accent color
+- Live streak count and total check-ins
+- One-tap check-in for today
+
+---
+
+### 🎛️ Habit Board Controls
+Filter and sort the board without leaving the dashboard:
+
+- **Status** — All, Pending, or Done Today
+- **Frequency** — All, Daily, Weekly, or Monthly (sidebar)
+- **Sort** — Streak, Name (A–Z), Category, Total Logs, or Recently Added
+- **Category** — click any sidebar category to focus that group
+
+---
+
+### 🧭 The 2-Day Rule
+A sidebar reminder: never skip a habit two days in a row. Protect the streak, even if the session is short.
 
 ---
 
@@ -117,6 +142,25 @@ Pre-built habit templates to kickstart your journey with a single click:
 - **Canvas Confetti Engine** — particle celebration animation on every habit completion
 - **Toast Notifications** — lightweight, auto-dismissing feedback messages
 - **Custom Modal Dialogs** — branded confirm & alert dialogs that match the design system (no native browser popups)
+
+---
+
+### 📱 Responsive Across Devices
+The layout is built for phone, tablet, and desktop — not a shrunk desktop page.
+
+| Breakpoint | Layout |
+|------------|--------|
+| **Desktop** (>1100px) | Sticky header, 280px sidebar, 4-column KPI row, multi-column habit cards |
+| **Laptop / tablet** (≤1100px) | 2-column KPI metrics |
+| **Tablet / small laptop** (≤860px) | Sidebar stacks above the board; search spans a full row; category chips scroll horizontally; category edit/delete stay tappable (no hover required) |
+| **Phone** (≤600px) | Single-column KPIs; stacked toolbar; icon-only header actions; stacked habit form fields; 16px inputs (no iOS zoom); full-width check-in; bottom-sheet style modals; safe-area padding |
+| **Narrow phone** (≤400px) | Tighter padding, 3-column icon picker |
+
+Also handled:
+- Habit cards use `minmax(min(330px, 100%), 1fr)` so they never overflow a 320px viewport
+- Modals and confetti canvas use `100%` instead of `100vw` (no scrollbar-induced horizontal scroll)
+- Toasts pin to the screen edges on small devices
+- Heatmap wraps to a 7-column week grid on phones
 
 ---
 
@@ -197,7 +241,7 @@ python3 -m http.server 8000
 | Layer | Technology |
 |-------|-----------|
 | Markup | HTML5 — Semantic, accessible, ARIA-ready |
-| Styles | CSS3 — Custom properties, Flexbox, Grid |
+| Styles | CSS3 — Custom properties, Flexbox, Grid, responsive breakpoints |
 | Logic | Vanilla ES2022 JavaScript (no bundler) |
 | Types | TypeScript 5 — Strict interfaces & types |
 | Icons | Inline vector SVG — crisp at any resolution |
