@@ -37,7 +37,7 @@ const MOTIVATIONAL_QUOTES = [
     '"Focus on the process, and the results will naturally follow."'
 ];
 
-// Starter Inspirations Ideas (Clarified with vector icons)
+// Starter Inspirations Ideas
 const STARTER_INSPIRATIONS = [
     { name: 'Hydration 2L', category: 'Health & Fitness', desc: 'Drink 2+ litres of fresh water daily', icon: 'droplet', color: '#0284c7', freq: 'daily' },
     { name: 'Read 20 Mins', category: 'Learning', desc: 'Read tech articles or books', icon: 'book', color: '#4f46e5', freq: 'daily' },
@@ -163,7 +163,6 @@ class HabitTrackerApp {
             if (raw) {
                 this.habits = JSON.parse(raw);
             } else {
-                // Empty by default as requested!
                 this.habits = [];
             }
         } catch (e) {
@@ -173,6 +172,114 @@ class HabitTrackerApp {
 
     saveHabits() {
         localStorage.setItem('habit_tracker_habits', JSON.stringify(this.habits));
+    }
+
+    /* --------------------------------------------------------------------------
+       CUSTOM MODAL DIALOGS (REPLACING NATIVE ALERT & CONFIRM)
+       -------------------------------------------------------------------------- */
+    showConfirmDialog({
+        title = 'Are you sure?',
+        message = 'This action cannot be undone.',
+        confirmText = 'Confirm',
+        cancelText = 'Cancel',
+        confirmClass = 'btn-danger',
+        type = 'danger'
+    } = {}) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirmDialogModal');
+            const titleEl = document.getElementById('confirmDialogTitle');
+            const messageEl = document.getElementById('confirmDialogMessage');
+            const iconBox = document.getElementById('confirmDialogIconBox');
+            const iconSvg = document.getElementById('confirmDialogIconSvg');
+            const confirmBtn = document.getElementById('confirmDialogConfirmBtn');
+            const cancelBtn = document.getElementById('confirmDialogCancelBtn');
+
+            if (!modal || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
+                resolve(window.confirm(`${title}\n${message}`));
+                return;
+            }
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            confirmBtn.textContent = confirmText;
+            confirmBtn.className = `btn ${confirmClass}`;
+            cancelBtn.textContent = cancelText;
+            cancelBtn.style.display = 'inline-flex';
+
+            if (iconBox) {
+                iconBox.className = `confirm-icon-box ${type}`;
+            }
+
+            if (iconSvg) {
+                if (type === 'info') {
+                    iconSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+                } else if (type === 'warning') {
+                    iconSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+                } else {
+                    iconSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+                }
+            }
+
+            const cleanup = (result) => {
+                modal.classList.remove('show');
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+                resolve(result);
+            };
+
+            confirmBtn.onclick = () => cleanup(true);
+            cancelBtn.onclick = () => cleanup(false);
+
+            modal.classList.add('show');
+        });
+    }
+
+    showAlertDialog({
+        title = 'Notice',
+        message = '',
+        buttonText = 'OK',
+        type = 'info'
+    } = {}) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirmDialogModal');
+            const titleEl = document.getElementById('confirmDialogTitle');
+            const messageEl = document.getElementById('confirmDialogMessage');
+            const iconBox = document.getElementById('confirmDialogIconBox');
+            const iconSvg = document.getElementById('confirmDialogIconSvg');
+            const confirmBtn = document.getElementById('confirmDialogConfirmBtn');
+            const cancelBtn = document.getElementById('confirmDialogCancelBtn');
+
+            if (!modal || !titleEl || !messageEl || !confirmBtn) {
+                window.alert(`${title}\n${message}`);
+                resolve();
+                return;
+            }
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            confirmBtn.textContent = buttonText;
+            confirmBtn.className = type === 'danger' ? 'btn btn-danger' : 'btn btn-primary';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+
+            if (iconBox) iconBox.className = `confirm-icon-box ${type}`;
+            if (iconSvg) {
+                if (type === 'danger') {
+                    iconSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+                } else {
+                    iconSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+                }
+            }
+
+            const cleanup = () => {
+                modal.classList.remove('show');
+                confirmBtn.onclick = null;
+                if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+                resolve();
+            };
+
+            confirmBtn.onclick = cleanup;
+            modal.classList.add('show');
+        });
     }
 
     /* --------------------------------------------------------------------------
@@ -444,11 +551,9 @@ class HabitTrackerApp {
             document.getElementById('categoryIconKey').value = categoryToEdit.icon || 'target';
             document.getElementById('categoryColorInput').value = categoryToEdit.color || '#4f46e5';
 
-            // Select icon
             document.querySelectorAll('#iconPickerGrid .icon-picker-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.icon === categoryToEdit.icon);
             });
-            // Select color
             document.querySelectorAll('#categoryColorPickerGroup .color-option').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.color === categoryToEdit.color);
             });
@@ -486,7 +591,6 @@ class HabitTrackerApp {
                 cat.name = name;
                 cat.icon = iconKey;
                 cat.color = color;
-                // Update habits using this category
                 this.habits.forEach(h => {
                     if (h.category === oldName) h.category = name;
                 });
@@ -509,11 +613,19 @@ class HabitTrackerApp {
         this.render();
     }
 
-    deleteCategory(id) {
+    async deleteCategory(id) {
         const cat = this.categories.find(c => c.id === id);
         if (!cat) return;
 
-        if (confirm(`Delete category "${cat.name}"? Habits in this category will move to "General".`)) {
+        const confirmed = await this.showConfirmDialog({
+            title: `Delete "${cat.name}" Category?`,
+            message: `Habits assigned to "${cat.name}" will be safely moved to "General". This action cannot be undone.`,
+            confirmText: 'Delete Category',
+            confirmClass: 'btn-danger',
+            type: 'danger'
+        });
+
+        if (confirmed) {
             this.categories = this.categories.filter(c => c.id !== id);
             this.habits.forEach(h => {
                 if (h.category === cat.name) h.category = 'General';
@@ -526,7 +638,7 @@ class HabitTrackerApp {
     }
 
     /* --------------------------------------------------------------------------
-       STARTER INSPIRATIONS (CLARIFIED SECTION)
+       STARTER INSPIRATIONS
        -------------------------------------------------------------------------- */
     setupStarterInspirations() {
         const list = document.getElementById('templateList');
@@ -552,7 +664,6 @@ class HabitTrackerApp {
         const template = STARTER_INSPIRATIONS.find(t => t.name === name);
         if (!template) return;
 
-        // Ensure category exists
         if (!this.categories.some(c => c.name === template.category)) {
             this.categories.push({
                 id: 'cat_' + Date.now(),
@@ -687,7 +798,6 @@ class HabitTrackerApp {
         const container = document.getElementById('categoryFilters');
         if (!container) return;
 
-        // Calculate counts
         const counts = { all: this.habits.length };
         this.categories.forEach(cat => {
             counts[cat.name] = this.habits.filter(h => h.category === cat.name).length;
@@ -1060,11 +1170,19 @@ class HabitTrackerApp {
         if (habit) this.openHabitModal(habit);
     }
 
-    deleteHabit(id) {
+    async deleteHabit(id) {
         const habit = this.habits.find(h => h.id === id);
         if (!habit) return;
 
-        if (confirm(`Delete habit "${habit.name}"?`)) {
+        const confirmed = await this.showConfirmDialog({
+            title: `Delete "${habit.name}"?`,
+            message: `Are you sure you want to delete this habit and all its logged history? This action cannot be undone.`,
+            confirmText: 'Delete Habit',
+            confirmClass: 'btn-danger',
+            type: 'danger'
+        });
+
+        if (confirmed) {
             this.habits = this.habits.filter(h => h.id !== id);
             this.saveHabits();
             this.render();
@@ -1149,8 +1267,16 @@ class HabitTrackerApp {
         this.triggerConfetti();
     }
 
-    clearAllHabits() {
-        if (confirm('Are you sure you want to clear all habits? This action cannot be undone.')) {
+    async clearAllHabits() {
+        const confirmed = await this.showConfirmDialog({
+            title: 'Clear All Habits?',
+            message: 'Are you sure you want to clear all habits? All your habits, streaks, and check-in history will be wiped. This action cannot be undone.',
+            confirmText: 'Clear All Data',
+            confirmClass: 'btn-danger',
+            type: 'danger'
+        });
+
+        if (confirmed) {
             this.habits = [];
             this.saveHabits();
             this.render();
@@ -1189,7 +1315,7 @@ class HabitTrackerApp {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             try {
                 const parsed = JSON.parse(e.target.result);
                 if (parsed.habits && Array.isArray(parsed.habits)) {
@@ -1208,9 +1334,19 @@ class HabitTrackerApp {
                     this.render();
                     this.closeDataModal();
                     this.showToast('Habits imported!', 'success');
+                } else {
+                    await this.showAlertDialog({
+                        title: 'Invalid File Format',
+                        message: 'The selected file is not a valid Habit Tracker JSON backup.',
+                        type: 'warning'
+                    });
                 }
             } catch (err) {
-                alert('Invalid JSON file format.');
+                await this.showAlertDialog({
+                    title: 'Failed to Import Backup',
+                    message: 'There was an error parsing the JSON file. Please ensure the file is not corrupted.',
+                    type: 'danger'
+                });
             }
         };
         reader.readAsText(file);

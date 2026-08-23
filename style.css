@@ -432,6 +432,16 @@ html, body {
     color: var(--primary);
 }
 
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: var(--danger-hover);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
 .btn-danger-outline {
     background: var(--danger-subtle);
     color: var(--danger);
@@ -1734,6 +1744,78 @@ html, body {
 .breakdown-bar-fill {
     height: 100%;
     border-radius: var(--radius-full);
+}
+
+/* ==========================================================================
+   CUSTOM CONFIRMATION / ALERT MODAL
+   ========================================================================== */
+.modal-card.modal-confirm {
+    max-width: 440px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.confirm-dialog-body {
+    padding: 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.confirm-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.confirm-icon-box.danger {
+    background-color: var(--danger-subtle);
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+}
+
+.confirm-icon-box.warning {
+    background-color: var(--warning-subtle);
+    color: var(--warning);
+    border: 1px solid var(--warning-border);
+}
+
+.confirm-icon-box.info {
+    background-color: var(--primary-subtle);
+    color: var(--primary);
+    border: 1px solid var(--primary-border);
+}
+
+.confirm-text-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.confirm-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+}
+
+.confirm-message {
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.confirm-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 24px;
+    background-color: var(--bg-subtle);
+    border-top: 1px solid var(--border-light);
 }
 
 /* ==========================================================================
