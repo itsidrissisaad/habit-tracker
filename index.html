@@ -3,90 +3,402 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habit Tracker - Material Design</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>Orbit | Habit Tracker & Personal Performance</title>
+    <meta name="description" content="A sleek, modern habit tracking application with streak insights, activity heatmaps, and category management.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Top Navigation -->
-        <nav class="app-nav">
-            <div class="nav-title">Habit Tracker</div>
-            <div class="nav-quote" id="navQuote">Stay consistent</div>
-        </nav>
+    <!-- Canvas for celebratory confetti -->
+    <canvas id="confettiCanvas"></canvas>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Left Sidebar: Add Habit Form -->
-            <aside class="sidebar">
-                <div class="sidebar-card">
-                    <h2>Add Habit</h2>
-                    <form id="habitForm" class="habit-form">
-                        <div class="form-group">
-                            <label>Habit Name</label>
-                            <input type="text" id="habitName" placeholder="e.g., Read 30 min" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <input type="text" id="habitDescription" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label>Frequency</label>
-                            <select id="habitFrequency" required>
-                                <option value="">Select frequency</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-full">Add Habit</button>
-                    </form>
+    <div class="app-layout">
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                        </svg>
+                    </div>
+                    <span class="logo-text">Orbit<span class="logo-dot">.</span></span>
                 </div>
-            </aside>
-
-            <!-- Center: Habits Grid -->
-            <section class="habits-section">
-                <h2>Active Habits</h2>
-                <div class="habits-grid" id="habitsGrid">
-                    <div class="empty-state">
-                        <p>No habits yet. Add one to get started!</p>
-                    </div>
+                <div class="header-divider"></div>
+                <div class="greeting-container">
+                    <span class="greeting-time" id="greetingTime">Welcome back</span>
+                    <span class="greeting-quote" id="headerQuote">"Small steps each day lead to big results."</span>
                 </div>
-            </section>
-
-            <!-- Right Sidebar: Analytics & Stats -->
-            <aside class="sidebar-right">
-                <div class="sidebar-card analytics-card">
-                    <h2>Statistics</h2>
-                    <div class="stat-item">
-                        <span class="stat-label">Total Habits</span>
-                        <span class="stat-value" id="totalHabits">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Completed Today</span>
-                        <span class="stat-value" id="completedToday">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Average Streak</span>
-                        <span class="stat-value" id="avgStreak">0</span>
-                    </div>
-                    <button class="btn btn-secondary btn-full" id="detailedAnalyticsBtn">View Details</button>
-                </div>
-            </aside>
-        </main>
-    </div>
-
-    <!-- Detailed Analytics Modal -->
-    <div class="modal" id="analyticsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Detailed Analytics</h2>
-                <button class="btn-close" id="closeModalBtn">&times;</button>
             </div>
-            <div class="modal-body" id="detailedAnalytics"></div>
+
+            <div class="header-right">
+                <!-- Search Bar -->
+                <div class="search-box">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search habits (e.g. read, run)..." aria-label="Search habits">
+                    <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search">&times;</button>
+                </div>
+
+                <!-- Action Buttons -->
+                <button class="btn btn-secondary" id="analyticsBtn" title="View Detailed Analytics">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Analytics</span>
+                </button>
+
+                <button class="btn btn-secondary" id="dataMenuBtn" title="Manage Data">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Data</span>
+                </button>
+
+                <button class="btn btn-primary" id="openAddModalBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Habit</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Wrapper -->
+        <div class="dashboard-wrapper">
+            <!-- Left Navigation / Filter Sidebar -->
+            <aside class="sidebar-nav">
+                <div class="sidebar-section">
+                    <h3 class="sidebar-heading">Categories</h3>
+                    <div class="category-filters" id="categoryFilters">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-heading">Frequency</h3>
+                    <div class="filter-pills" id="frequencyFilters">
+                        <button class="filter-pill active" data-freq="all">All Frequencies</button>
+                        <button class="filter-pill" data-freq="daily">Daily</button>
+                        <button class="filter-pill" data-freq="weekly">Weekly</button>
+                        <button class="filter-pill" data-freq="monthly">Monthly</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="sidebar-heading">Quick Templates</h3>
+                    <div class="template-list" id="templateList">
+                        <button class="template-card" data-template="water">
+                            <span class="template-icon">💧</span>
+                            <div class="template-info">
+                                <span class="template-title">Hydration 2L</span>
+                                <span class="template-sub">Health • Daily</span>
+                            </div>
+                        </button>
+                        <button class="template-card" data-template="read">
+                            <span class="template-icon">📚</span>
+                            <div class="template-info">
+                                <span class="template-title">Read 20 mins</span>
+                                <span class="template-sub">Learning • Daily</span>
+                            </div>
+                        </button>
+                        <button class="template-card" data-template="workout">
+                            <span class="template-icon">⚡</span>
+                            <div class="template-info">
+                                <span class="template-title">Morning Workout</span>
+                                <span class="template-sub">Fitness • 5x/week</span>
+                            </div>
+                        </button>
+                        <button class="template-card" data-template="meditate">
+                            <span class="template-icon">🧘</span>
+                            <div class="template-info">
+                                <span class="template-title">Mindfulness</span>
+                                <span class="template-sub">Wellness • Daily</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Motivation Box -->
+                <div class="motivation-banner">
+                    <div class="motivation-icon">🚀</div>
+                    <div class="motivation-text">
+                        <strong>Daily Habit Rule</strong>
+                        <p>Never miss two days in a row to maintain compound growth.</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Content Area -->
+            <main class="main-content">
+                <!-- Metrics Bar -->
+                <section class="metrics-grid">
+                    <!-- Progress Card -->
+                    <div class="metric-card progress-metric-card">
+                        <div class="metric-info">
+                            <span class="metric-label">Today's Progress</span>
+                            <div class="metric-value-row">
+                                <span class="metric-value" id="todayProgressText">0%</span>
+                                <span class="metric-sub" id="todayCompletedText">0 of 0 habits</span>
+                            </div>
+                        </div>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" width="68" height="68">
+                                <circle class="progress-ring-bg" stroke-width="6" cx="34" cy="34" r="26"></circle>
+                                <circle class="progress-ring-fill" id="progressRingFill" stroke-width="6" cx="34" cy="34" r="26"></circle>
+                            </svg>
+                            <span class="progress-ring-icon">🎯</span>
+                        </div>
+                    </div>
+
+                    <!-- Best Streak Card -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Best Active Streak</span>
+                            <span class="metric-icon-badge flame-badge">🔥</span>
+                        </div>
+                        <div class="metric-value-row">
+                            <span class="metric-value" id="bestStreakValue">0</span>
+                            <span class="metric-unit">days</span>
+                        </div>
+                        <span class="metric-caption" id="bestStreakName">No active streaks</span>
+                    </div>
+
+                    <!-- Total Completions Card -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">Total Logs</span>
+                            <span class="metric-icon-badge success-badge">✓</span>
+                        </div>
+                        <div class="metric-value-row">
+                            <span class="metric-value" id="totalCompletionsValue">0</span>
+                            <span class="metric-unit">check-ins</span>
+                        </div>
+                        <span class="metric-caption">All-time tracked actions</span>
+                    </div>
+
+                    <!-- Adherence Score Card -->
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">7-Day Consistency</span>
+                            <span class="metric-icon-badge score-badge">📈</span>
+                        </div>
+                        <div class="metric-value-row">
+                            <span class="metric-value" id="weeklyAdherenceValue">0%</span>
+                        </div>
+                        <div class="mini-bar-track">
+                            <div class="mini-bar-fill" id="weeklyAdherenceBar" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Habits Section -->
+                <section class="habits-section">
+                    <!-- Toolbar / Controls -->
+                    <div class="section-toolbar">
+                        <div class="toolbar-left">
+                            <h2 class="section-title">Active Habits</h2>
+                            <span class="count-badge" id="habitCountBadge">0</span>
+                        </div>
+
+                        <div class="toolbar-right">
+                            <!-- Status Filter -->
+                            <div class="segmented-control" id="statusFilterControl">
+                                <button class="segment-btn active" data-status="all">All</button>
+                                <button class="segment-btn" data-status="pending">Pending</button>
+                                <button class="segment-btn" data-status="completed">Done Today</button>
+                            </div>
+
+                            <!-- Sort dropdown -->
+                            <div class="sort-wrapper">
+                                <label for="sortSelect" class="sr-only">Sort habits</label>
+                                <select id="sortSelect" class="sort-select">
+                                    <option value="streak">Sort by: Streak (High to Low)</option>
+                                    <option value="name">Sort by: Habit Name</option>
+                                    <option value="category">Sort by: Category</option>
+                                    <option value="rate">Sort by: Completion Rate</option>
+                                    <option value="newest">Sort by: Newest First</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Habits Grid Container -->
+                    <div class="habits-grid" id="habitsGrid">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </section>
+            </main>
         </div>
     </div>
 
-    <script src="script.ts"></script>
+    <!-- ADD / EDIT HABIT MODAL -->
+    <div class="modal-overlay" id="habitModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="modalTitle">Create New Habit</h2>
+                    <p class="modal-subtitle">Set clear intentions and track your consistency.</p>
+                </div>
+                <button class="modal-close-btn" id="closeHabitModalBtn" aria-label="Close modal">&times;</button>
+            </div>
+
+            <form id="habitForm" class="modal-form">
+                <input type="hidden" id="editHabitId" value="">
+
+                <div class="form-group">
+                    <label for="habitName">Habit Name <span class="required">*</span></label>
+                    <div class="input-with-icon">
+                        <input type="text" id="habitName" placeholder="e.g., Morning 5km Jog" required maxlength="60">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="habitCategory">Category</label>
+                        <select id="habitCategory" required>
+                            <option value="Health">🏃 Health & Fitness</option>
+                            <option value="Productivity">💼 Productivity & Work</option>
+                            <option value="Learning">📚 Learning & Skills</option>
+                            <option value="Mindfulness">🧘 Mindfulness & Wellness</option>
+                            <option value="Finance">💰 Finance & Money</option>
+                            <option value="Lifestyle">✨ Lifestyle & Creative</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="habitFrequency">Frequency</label>
+                        <select id="habitFrequency" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="habitDescription">Description / Target (Optional)</label>
+                    <input type="text" id="habitDescription" placeholder="e.g., 30 minutes before 8 AM" maxlength="120">
+                </div>
+
+                <div class="form-group">
+                    <label>Choose Color Accent</label>
+                    <div class="color-picker-group" id="colorPickerGroup">
+                        <button type="button" class="color-option active" data-color="#4f46e5" style="--c: #4f46e5;" title="Indigo"></button>
+                        <button type="button" class="color-option" data-color="#059669" style="--c: #059669;" title="Emerald"></button>
+                        <button type="button" class="color-option" data-color="#d97706" style="--c: #d97706;" title="Amber"></button>
+                        <button type="button" class="color-option" data-color="#e11d48" style="--c: #e11d48;" title="Rose"></button>
+                        <button type="button" class="color-option" data-color="#7c3aed" style="--c: #7c3aed;" title="Violet"></button>
+                        <button type="button" class="color-option" data-color="#0284c7" style="--c: #0284c7;" title="Sky"></button>
+                    </div>
+                    <input type="hidden" id="habitColor" value="#4f46e5">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelHabitModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveHabitBtn">Save Habit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DETAILED ANALYTICS MODAL -->
+    <div class="modal-overlay" id="analyticsModal" role="dialog" aria-modal="true" aria-labelledby="analyticsTitle">
+        <div class="modal-card modal-lg">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="analyticsTitle">Habit Performance & Heatmap</h2>
+                    <p class="modal-subtitle">Activity density, adherence breakdown, and streak metrics.</p>
+                </div>
+                <button class="modal-close-btn" id="closeAnalyticsModalBtn" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="modal-body" id="analyticsModalBody">
+                <!-- Heatmap Section -->
+                <div class="analytics-card">
+                    <div class="analytics-card-header">
+                        <h3>Last 30 Days Activity Heatmap</h3>
+                        <div class="heatmap-legend">
+                            <span class="legend-text">Less</span>
+                            <div class="legend-box level-0"></div>
+                            <div class="legend-box level-1"></div>
+                            <div class="legend-box level-2"></div>
+                            <div class="legend-box level-3"></div>
+                            <span class="legend-text">More</span>
+                        </div>
+                    </div>
+                    <div class="heatmap-grid" id="activityHeatmapGrid">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Per-Habit Breakdown -->
+                <div class="analytics-card">
+                    <h3>Performance Breakdown by Habit</h3>
+                    <div class="breakdown-list" id="habitBreakdownList">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA MANAGEMENT (EXPORT / IMPORT / RESET) MODAL -->
+    <div class="modal-overlay" id="dataModal" role="dialog" aria-modal="true" aria-labelledby="dataModalTitle">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title" id="dataModalTitle">Data Management</h2>
+                    <p class="modal-subtitle">Export, backup, or restore your habit data.</p>
+                </div>
+                <button class="modal-close-btn" id="closeDataModalBtn" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="modal-body data-modal-body">
+                <div class="data-action-card">
+                    <div class="data-action-info">
+                        <strong>Export Habit Data</strong>
+                        <p>Download your habits and check-in history as a JSON file backup.</p>
+                    </div>
+                    <button class="btn btn-secondary" id="exportDataBtn">Download JSON</button>
+                </div>
+
+                <div class="data-action-card">
+                    <div class="data-action-info">
+                        <strong>Import Habit Data</strong>
+                        <p>Restore your data from an existing JSON backup.</p>
+                    </div>
+                    <label class="btn btn-secondary file-upload-btn">
+                        Upload File
+                        <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                    </label>
+                </div>
+
+                <div class="data-action-card danger-action-card">
+                    <div class="data-action-info">
+                        <strong>Reset to Demo Data</strong>
+                        <p>Load curated sample habits to showcase the application.</p>
+                    </div>
+                    <button class="btn btn-danger-outline" id="loadDemoDataBtn">Load Sample Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Script loading: works natively in modern browsers -->
+    <script src="script.js"></script>
 </body>
 </html>
