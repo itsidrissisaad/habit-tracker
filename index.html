@@ -69,15 +69,6 @@
                     <span>Analytics</span>
                 </button>
 
-                <button class="btn btn-secondary" id="dataMenuBtn" title="Data Backup & Restore">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>Data</span>
-                </button>
-
                 <button class="btn btn-primary" id="openAddModalBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -111,6 +102,13 @@
                                 <rect x="3" y="14" width="7" height="7"></rect>
                             </svg>
                             <span>Manage Categories</span>
+                        </button>
+                        <button class="dropdown-item" id="dropdownClearAllBtn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Clear All Habits</span>
                         </button>
                         <button class="dropdown-item" id="dropdownAuthBtn">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -537,57 +535,7 @@
         </div>
     </div>
 
-    <!-- =========================================================================
-         DATA MANAGEMENT MODAL (EXPORT / IMPORT / DEMO LOADER)
-         ========================================================================= -->
-    <div class="modal-overlay" id="dataModal" role="dialog" aria-modal="true" aria-labelledby="dataModalTitle">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div>
-                    <h2 class="modal-title" id="dataModalTitle">Data Management</h2>
-                    <p class="modal-subtitle">Backup, restore, or load sample habit data.</p>
-                </div>
-                <button class="modal-close-btn" id="closeDataModalBtn" aria-label="Close modal">&times;</button>
-            </div>
 
-            <div class="modal-body data-modal-body">
-                <div class="data-action-card">
-                    <div class="data-action-info">
-                        <strong>Export Habit Data</strong>
-                        <p>Download your habits, custom categories, and check-in history as a JSON backup.</p>
-                    </div>
-                    <button class="btn btn-secondary" id="exportDataBtn">Download JSON</button>
-                </div>
-
-                <div class="data-action-card">
-                    <div class="data-action-info">
-                        <strong>Import Habit Data</strong>
-                        <p>Restore your data from an existing JSON backup file.</p>
-                    </div>
-                    <label class="btn btn-secondary file-upload-btn">
-                        Upload File
-                        <input type="file" id="importFileInput" accept=".json" style="display: none;">
-                    </label>
-                </div>
-
-                <div class="data-action-card demo-action-card">
-                    <div class="data-action-info">
-                        <strong>Load Demo Sample Habits</strong>
-                        <p>Populate the dashboard with rich sample habits to preview or test all features.</p>
-                    </div>
-                    <button class="btn btn-secondary" id="loadDemoDataBtn">Load Sample Data</button>
-                </div>
-
-                <div class="data-action-card danger-action-card">
-                    <div class="data-action-info">
-                        <strong>Clear All Habits</strong>
-                        <p>Wipe all habits and check-ins to start completely fresh.</p>
-                    </div>
-                    <button class="btn btn-danger-outline" id="clearAllDataBtn">Clear All Data</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- =========================================================================
          CUSTOM CONFIRMATION & ALERT DIALOG MODAL (SaaS STYLE)

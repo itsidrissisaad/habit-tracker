@@ -335,9 +335,10 @@ class HabitTrackerApp {
             document.addEventListener('click', () => userMenu.classList.remove('show'));
         }
 
-        // Auth Modal Triggers
+        // Dropdown Items
         document.getElementById('dropdownAuthBtn')?.addEventListener('click', () => this.openAuthModal());
         document.getElementById('closeAuthModalBtn')?.addEventListener('click', () => this.closeAuthModal());
+        document.getElementById('dropdownClearAllBtn')?.addEventListener('click', () => this.clearAllHabits());
 
         // Auth Tabs
         const tabLoginBtn = document.getElementById('tabLoginBtn');
@@ -492,15 +493,12 @@ class HabitTrackerApp {
             });
         }
 
-        // Analytics & Data Modals
+        // Analytics Modal
         document.getElementById('analyticsBtn')?.addEventListener('click', () => this.openAnalyticsModal());
         document.getElementById('closeAnalyticsModalBtn')?.addEventListener('click', () => this.closeAnalyticsModal());
 
-        document.getElementById('dataMenuBtn')?.addEventListener('click', () => this.openDataModal());
-        document.getElementById('closeDataModalBtn')?.addEventListener('click', () => this.closeDataModal());
-
         // Background click to close modals
-        ['authModal', 'categoryModal', 'habitModal', 'analyticsModal', 'dataModal'].forEach(id => {
+        ['authModal', 'categoryModal', 'habitModal', 'analyticsModal'].forEach(id => {
             const modal = document.getElementById(id);
             if (modal) {
                 modal.addEventListener('click', (e) => {
@@ -508,12 +506,6 @@ class HabitTrackerApp {
                 });
             }
         });
-
-        // Data actions
-        document.getElementById('exportDataBtn')?.addEventListener('click', () => this.exportData());
-        document.getElementById('loadDemoDataBtn')?.addEventListener('click', () => this.loadSampleData());
-        document.getElementById('clearAllDataBtn')?.addEventListener('click', () => this.clearAllHabits());
-        document.getElementById('importFileInput')?.addEventListener('change', (e) => this.importData(e));
     }
 
     /* --------------------------------------------------------------------------
@@ -1064,17 +1056,12 @@ class HabitTrackerApp {
                             </svg>
                         </div>
                         <h3>${this.habits.length === 0 ? 'Your habit board is clean and ready' : 'No habits match your filters'}</h3>
-                        <p>${this.habits.length === 0 ? 'Start tracking your daily goals, build momentum, and master consistency. Add your first habit or pick a starter idea.' : 'Try switching category filters or frequency to view your habits.'}</p>
+                        <p>${this.habits.length === 0 ? 'Start tracking your daily goals, build momentum, and master consistency. Add your first habit or pick a starter inspiration.' : 'Try switching category filters or frequency to view your habits.'}</p>
                         <div class="empty-state-actions">
                             <button class="btn btn-primary" onclick="tracker.openHabitModal()">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                                 <span>Create First Habit</span>
                             </button>
-                            ${this.habits.length === 0 ? `
-                            <button class="btn btn-secondary" onclick="tracker.loadSampleData()">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                <span>Load Sample Habits</span>
-                            </button>` : ''}
                         </div>
                     </div>
                 `;
@@ -1314,83 +1301,6 @@ class HabitTrackerApp {
         }
     }
 
-    /* --------------------------------------------------------------------------
-       SAMPLE DEMO DATA & DATA BACKUP
-       -------------------------------------------------------------------------- */
-    loadSampleData() {
-        const today = new Date();
-        const getDateStr = (offset) => {
-            const d = new Date(today);
-            d.setDate(d.getDate() - offset);
-            return d.toISOString().split('T')[0];
-        };
-
-        this.categories = [...DEFAULT_CATEGORIES];
-        this.habits = [
-            {
-                id: 101,
-                name: "Morning 5km Jog",
-                description: "Zone 2 aerobic cardio before 8:00 AM",
-                category: "Health & Fitness",
-                frequency: "daily",
-                color: "#059669",
-                createdAt: getDateStr(30),
-                completions: [
-                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                    getDateStr(4), getDateStr(5), getDateStr(7), getDateStr(8),
-                    getDateStr(10), getDateStr(11), getDateStr(12), getDateStr(14)
-                ]
-            },
-            {
-                id: 102,
-                name: "Read 25 Pages",
-                description: "Software engineering & product design books",
-                category: "Learning",
-                frequency: "daily",
-                color: "#0284c7",
-                createdAt: getDateStr(25),
-                completions: [
-                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                    getDateStr(4), getDateStr(5), getDateStr(6), getDateStr(7),
-                    getDateStr(8), getDateStr(9), getDateStr(10), getDateStr(11)
-                ]
-            },
-            {
-                id: 103,
-                name: "Deep Work Sprint (90m)",
-                description: "Uninterrupted engineering flow state",
-                category: "Productivity",
-                frequency: "daily",
-                color: "#4f46e5",
-                createdAt: getDateStr(20),
-                completions: [
-                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                    getDateStr(5), getDateStr(6), getDateStr(7), getDateStr(9)
-                ]
-            },
-            {
-                id: 104,
-                name: "Mindful Meditation",
-                description: "10 minutes box breathing & mental reset",
-                category: "Mindfulness",
-                frequency: "daily",
-                color: "#7c3aed",
-                createdAt: getDateStr(18),
-                completions: [
-                    getDateStr(1), getDateStr(2), getDateStr(3), getDateStr(4),
-                    getDateStr(5), getDateStr(6), getDateStr(7)
-                ]
-            }
-        ];
-
-        this.saveCategories();
-        this.saveHabits();
-        this.render();
-        this.closeDataModal();
-        this.showToast('Loaded sample habit data!', 'success');
-        this.triggerConfetti();
-    }
-
     async clearAllHabits() {
         const confirmed = await this.showConfirmDialog({
             title: 'Clear All Habits?',
@@ -1404,76 +1314,8 @@ class HabitTrackerApp {
             this.habits = [];
             this.saveHabits();
             this.render();
-            this.closeDataModal();
             this.showToast('Cleared all habits.');
         }
-    }
-
-    openDataModal() {
-        document.getElementById('dataModal')?.classList.add('show');
-    }
-
-    closeDataModal() {
-        document.getElementById('dataModal')?.classList.remove('show');
-    }
-
-    exportData() {
-        const payload = {
-            user: this.currentUser,
-            categories: this.categories,
-            habits: this.habits,
-            exportedAt: new Date().toISOString()
-        };
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `habit-tracker-backup-${this.getTodayStr()}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        this.showToast('Data exported successfully!', 'success');
-    }
-
-    importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const parsed = JSON.parse(e.target.result);
-                if (parsed.habits && Array.isArray(parsed.habits)) {
-                    this.habits = parsed.habits;
-                    if (parsed.categories && Array.isArray(parsed.categories)) {
-                        this.categories = parsed.categories;
-                    }
-                    this.saveCategories();
-                    this.saveHabits();
-                    this.render();
-                    this.closeDataModal();
-                    this.showToast('Backup restored successfully!', 'success');
-                } else if (Array.isArray(parsed)) {
-                    this.habits = parsed;
-                    this.saveHabits();
-                    this.render();
-                    this.closeDataModal();
-                    this.showToast('Habits imported!', 'success');
-                } else {
-                    await this.showAlertDialog({
-                        title: 'Invalid File Format',
-                        message: 'The selected file is not a valid Habit Tracker JSON backup.',
-                        type: 'warning'
-                    });
-                }
-            } catch (err) {
-                await this.showAlertDialog({
-                    title: 'Failed to Import Backup',
-                    message: 'There was an error parsing the JSON file. Please ensure the file is not corrupted.',
-                    type: 'danger'
-                });
-            }
-        };
-        reader.readAsText(file);
     }
 
     /* --------------------------------------------------------------------------
