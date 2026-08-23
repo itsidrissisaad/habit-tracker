@@ -1,26 +1,33 @@
 /**
- * Orbit Habit Tracker - TypeScript Architecture & Engine
+ * Habit Tracker - TypeScript Architecture & Engine
  */
 
-export type HabitCategory = 'Health' | 'Productivity' | 'Learning' | 'Mindfulness' | 'Finance' | 'Lifestyle';
 export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
 export type SortOrder = 'streak' | 'name' | 'category' | 'rate' | 'newest';
+
+export interface UserProfile {
+    name: string;
+    email: string;
+    avatarColor: string;
+    isGuest: boolean;
+}
+
+export interface CustomCategory {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+}
 
 export interface Habit {
     id: number;
     name: string;
     description?: string;
-    category: HabitCategory;
+    category: string;
     frequency: HabitFrequency;
     color: string;
     createdAt: string;
-    completions: string[]; // Array of ISO date strings 'YYYY-MM-DD'
-}
-
-export interface CategoryMetadata {
-    icon: string;
-    color: string;
-    bg: string;
+    completions: string[]; // ISO date strings 'YYYY-MM-DD'
 }
 
 export interface DayPillData {
@@ -41,14 +48,28 @@ export interface ConfettiParticle {
     opacity: number;
 }
 
-export const CATEGORIES: Record<HabitCategory, CategoryMetadata> = {
-    'Health': { icon: '🏃', color: '#059669', bg: '#ecfdf5' },
-    'Productivity': { icon: '💼', color: '#4f46e5', bg: '#eef2ff' },
-    'Learning': { icon: '📚', color: '#0284c7', bg: '#f0f9ff' },
-    'Mindfulness': { icon: '🧘', color: '#7c3aed', bg: '#f5f3ff' },
-    'Finance': { icon: '💰', color: '#d97706', bg: '#fffbeb' },
-    'Lifestyle': { icon: '✨', color: '#e11d48', bg: '#fff1f2' }
+export const SVG_ICONS: Record<string, string> = {
+    'target': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+    'activity': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+    'book': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+    'briefcase': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+    'dumbbell': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></svg>`,
+    'feather': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>`,
+    'wallet': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>`,
+    'coffee': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>`,
+    'code': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
+    'sparkles': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>`,
+    'sun': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`,
+    'droplet': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
 };
+
+export const DEFAULT_CATEGORIES: CustomCategory[] = [
+    { id: 'cat_health', name: 'Health & Fitness', icon: 'activity', color: '#059669' },
+    { id: 'cat_productivity', name: 'Productivity', icon: 'briefcase', color: '#4f46e5' },
+    { id: 'cat_learning', name: 'Learning', icon: 'book', color: '#0284c7' },
+    { id: 'cat_wellness', name: 'Mindfulness', icon: 'feather', color: '#7c3aed' },
+    { id: 'cat_finance', name: 'Finance', icon: 'wallet', color: '#d97706' }
+];
 
 export const MOTIVATIONAL_QUOTES: string[] = [
     '"We are what we repeatedly do. Excellence, then, is not an act, but a habit."',
@@ -58,14 +79,16 @@ export const MOTIVATIONAL_QUOTES: string[] = [
     '"Focus on the process, and the results will naturally follow."'
 ];
 
-export class OrbitHabitTracker {
+export class HabitTrackerApp {
     private habits: Habit[] = [];
+    private categories: CustomCategory[] = [];
+    private currentUser: UserProfile | null = null;
     private selectedCategory: string = 'all';
     private selectedFrequency: string = 'all';
     private selectedStatus: string = 'all';
     private searchQuery: string = '';
     private sortOrder: SortOrder = 'streak';
-    private readonly storageKey: string = 'orbit_habits_v2';
+
     private canvas: HTMLCanvasElement | null = null;
     private ctx: CanvasRenderingContext2D | null = null;
     private confettiParticles: ConfettiParticle[] = [];
@@ -78,113 +101,67 @@ export class OrbitHabitTracker {
     }
 
     private init(): void {
+        this.loadUser();
+        this.loadCategories();
         this.loadHabits();
-        this.setupGreeting();
+        this.setupIconPicker();
+        this.setupStarterInspirations();
         this.setupEventListeners();
         this.setupConfetti();
+        this.updateUserGreeting();
         this.render();
     }
 
-    private loadHabits(): void {
-        try {
-            const raw = localStorage.getItem(this.storageKey);
-            if (raw) {
-                this.habits = JSON.parse(raw);
-            } else {
-                this.habits = this.generateDemoHabits();
-                this.saveHabits();
+    private loadUser(): void {
+        const raw = localStorage.getItem('habit_tracker_user');
+        if (raw) {
+            try {
+                this.currentUser = JSON.parse(raw);
+            } catch (e) {
+                this.currentUser = { name: 'Alex Rivera', email: 'alex@example.com', avatarColor: '#4f46e5', isGuest: false };
             }
-        } catch (e) {
-            console.error("Failed to parse habits from storage", e);
-            this.habits = this.generateDemoHabits();
+        } else {
+            this.currentUser = { name: 'Guest User', email: 'guest@habittracker.app', avatarColor: '#4f46e5', isGuest: true };
+            this.saveUser();
         }
+        this.updateUserUI();
     }
 
-    private saveHabits(): void {
-        try {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.habits));
-        } catch (e) {
-            console.error("Failed to save habits to storage", e);
+    private saveUser(): void {
+        localStorage.setItem('habit_tracker_user', JSON.stringify(this.currentUser));
+    }
+
+    private updateUserUI(): void {
+        if (!this.currentUser) return;
+        const nameLabel = document.getElementById('userNameLabel');
+        const avatarCircle = document.getElementById('userAvatarCircle');
+        const dropdownName = document.getElementById('dropdownUserName');
+        const dropdownEmail = document.getElementById('dropdownUserEmail');
+        const authText = document.getElementById('dropdownAuthText');
+
+        const initials = this.currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
+
+        if (nameLabel) nameLabel.textContent = this.currentUser.name;
+        if (avatarCircle) {
+            avatarCircle.textContent = initials;
+            avatarCircle.style.backgroundColor = this.currentUser.avatarColor || '#4f46e5';
         }
+        if (dropdownName) dropdownName.textContent = this.currentUser.name;
+        if (dropdownEmail) dropdownEmail.textContent = this.currentUser.email;
+        if (authText) authText.textContent = this.currentUser.isGuest ? 'Sign In / Sign Up' : 'Switch Account / Log Out';
     }
 
-    public generateDemoHabits(): Habit[] {
-        const today = new Date();
-        const getDateStr = (offsetDays: number): string => {
-            const d = new Date(today);
-            d.setDate(d.getDate() - offsetDays);
-            return d.toISOString().split('T')[0];
-        };
-
-        return [
-            {
-                id: 101,
-                name: "Morning 5km Run",
-                description: "Zone 2 aerobic cardio before 8:00 AM",
-                category: "Health",
-                frequency: "daily",
-                color: "#059669",
-                createdAt: getDateStr(30),
-                completions: [
-                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                    getDateStr(4), getDateStr(5), getDateStr(7), getDateStr(8),
-                    getDateStr(10), getDateStr(11), getDateStr(12), getDateStr(14),
-                    getDateStr(15), getDateStr(16), getDateStr(18), getDateStr(19)
-                ]
-            },
-            {
-                id: 102,
-                name: "Read 25 Pages",
-                description: "Software design patterns & tech articles",
-                category: "Learning",
-                frequency: "daily",
-                color: "#0284c7",
-                createdAt: getDateStr(25),
-                completions: [
-                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                    getDateStr(4), getDateStr(5), getDateStr(6), getDateStr(7),
-                    getDateStr(8), getDateStr(9), getDateStr(10), getDateStr(11),
-                    getDateStr(12), getDateStr(13), getDateStr(14)
-                ]
-            },
-            {
-                id: 103,
-                name: "Deep Work Block (90 min)",
-                description: "Uninterrupted engineering flow state",
-                category: "Productivity",
-                frequency: "daily",
-                color: "#4f46e5",
-                createdAt: getDateStr(20),
-                completions: [
-                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                    getDateStr(5), getDateStr(6), getDateStr(7), getDateStr(9),
-                    getDateStr(10), getDateStr(12)
-                ]
-            },
-            {
-                id: 104,
-                name: "Daily Mindfulness & Meditation",
-                description: "10 minutes box breathing & mental reset",
-                category: "Mindfulness",
-                frequency: "daily",
-                color: "#7c3aed",
-                createdAt: getDateStr(18),
-                completions: [
-                    getDateStr(1), getDateStr(2), getDateStr(3), getDateStr(4),
-                    getDateStr(5), getDateStr(6), getDateStr(7), getDateStr(8)
-                ]
-            }
-        ];
-    }
-
-    private setupGreeting(): void {
+    private updateUserGreeting(): void {
         const hour = new Date().getHours();
         let greeting = "Good morning";
         if (hour >= 12 && hour < 17) greeting = "Good afternoon";
         else if (hour >= 17) greeting = "Good evening";
 
         const greetingEl = document.getElementById('greetingTime');
-        if (greetingEl) greetingEl.textContent = `${greeting}, Ready to build habits?`;
+        if (greetingEl) {
+            const firstName = this.currentUser ? this.currentUser.name.split(' ')[0] : 'there';
+            greetingEl.textContent = `${greeting}, ${firstName}! 👋`;
+        }
 
         const quoteEl = document.getElementById('headerQuote');
         if (quoteEl) {
@@ -192,19 +169,95 @@ export class OrbitHabitTracker {
         }
     }
 
+    private loadCategories(): void {
+        try {
+            const raw = localStorage.getItem('habit_tracker_categories');
+            if (raw) {
+                this.categories = JSON.parse(raw);
+            } else {
+                this.categories = [...DEFAULT_CATEGORIES];
+                this.saveCategories();
+            }
+        } catch (e) {
+            this.categories = [...DEFAULT_CATEGORIES];
+        }
+    }
+
+    private saveCategories(): void {
+        localStorage.setItem('habit_tracker_categories', JSON.stringify(this.categories));
+    }
+
+    private loadHabits(): void {
+        try {
+            const raw = localStorage.getItem('habit_tracker_habits');
+            this.habits = raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            this.habits = [];
+        }
+    }
+
+    private saveHabits(): void {
+        localStorage.setItem('habit_tracker_habits', JSON.stringify(this.habits));
+    }
+
     private setupEventListeners(): void {
-        const searchInput = document.getElementById('searchInput') as HTMLInputElement | null;
-        const clearSearchBtn = document.getElementById('clearSearchBtn') as HTMLButtonElement | null;
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.searchQuery = (e.target as HTMLInputElement).value.toLowerCase().trim();
-                if (clearSearchBtn) {
-                    clearSearchBtn.style.display = this.searchQuery ? 'block' : 'none';
-                }
-                this.renderHabitsGrid();
+        const userBtn = document.getElementById('userProfileBtn');
+        const userMenu = document.getElementById('userDropdownMenu');
+        if (userBtn && userMenu) {
+            userBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userMenu.classList.toggle('show');
+            });
+            document.addEventListener('click', () => userMenu.classList.remove('show'));
+        }
+
+        document.getElementById('dropdownAuthBtn')?.addEventListener('click', () => this.openAuthModal());
+        document.getElementById('closeAuthModalBtn')?.addEventListener('click', () => this.closeAuthModal());
+
+        const tabLoginBtn = document.getElementById('tabLoginBtn');
+        const tabSignUpBtn = document.getElementById('tabSignUpBtn');
+        const loginForm = document.getElementById('loginForm');
+        const signUpForm = document.getElementById('signUpForm');
+
+        tabLoginBtn?.addEventListener('click', () => {
+            tabLoginBtn.classList.add('active');
+            tabSignUpBtn?.classList.remove('active');
+            if (loginForm) loginForm.style.display = 'flex';
+            if (signUpForm) signUpForm.style.display = 'none';
+        });
+
+        tabSignUpBtn?.addEventListener('click', () => {
+            tabSignUpBtn.classList.add('active');
+            tabLoginBtn?.classList.remove('active');
+            if (signUpForm) signUpForm.style.display = 'flex';
+            if (loginForm) loginForm.style.display = 'none';
+        });
+
+        loginForm?.addEventListener('submit', (e) => this.handleLogin(e));
+        signUpForm?.addEventListener('submit', (e) => this.handleSignUp(e));
+        document.getElementById('guestLoginBtn')?.addEventListener('click', () => this.handleGuestLogin());
+
+        const userColorPicker = document.getElementById('userAvatarColorPicker');
+        if (userColorPicker) {
+            userColorPicker.addEventListener('click', (e) => {
+                const btn = (e.target as HTMLElement).closest('.color-option') as HTMLElement | null;
+                if (!btn) return;
+                userColorPicker.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const avatarColorInput = document.getElementById('signUpAvatarColor') as HTMLInputElement | null;
+                if (avatarColorInput) avatarColorInput.value = btn.dataset.color || '#4f46e5';
             });
         }
 
+        const searchInput = document.getElementById('searchInput') as HTMLInputElement | null;
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchQuery = (e.target as HTMLInputElement).value.toLowerCase().trim();
+                if (clearSearchBtn) clearSearchBtn.style.display = this.searchQuery ? 'block' : 'none';
+                this.renderHabitsGrid();
+            });
+        }
         if (clearSearchBtn) {
             clearSearchBtn.addEventListener('click', () => {
                 if (searchInput) searchInput.value = '';
@@ -217,11 +270,11 @@ export class OrbitHabitTracker {
         const freqContainer = document.getElementById('frequencyFilters');
         if (freqContainer) {
             freqContainer.addEventListener('click', (e) => {
-                const target = (e.target as HTMLElement).closest('.filter-pill') as HTMLElement | null;
-                if (!target) return;
-                freqContainer.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
-                target.classList.add('active');
-                this.selectedFrequency = target.dataset.freq || 'all';
+                const btn = (e.target as HTMLElement).closest('.filter-pill') as HTMLElement | null;
+                if (!btn) return;
+                freqContainer.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedFrequency = btn.dataset.freq || 'all';
                 this.renderHabitsGrid();
             });
         }
@@ -229,35 +282,54 @@ export class OrbitHabitTracker {
         const statusControl = document.getElementById('statusFilterControl');
         if (statusControl) {
             statusControl.addEventListener('click', (e) => {
-                const target = (e.target as HTMLElement).closest('.segment-btn') as HTMLElement | null;
-                if (!target) return;
-                statusControl.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
-                target.classList.add('active');
-                this.selectedStatus = target.dataset.status || 'all';
+                const btn = (e.target as HTMLElement).closest('.segment-btn') as HTMLElement | null;
+                if (!btn) return;
+                statusControl.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedStatus = btn.dataset.status || 'all';
                 this.renderHabitsGrid();
             });
         }
 
-        const sortSelect = document.getElementById('sortSelect') as HTMLSelectElement | null;
-        if (sortSelect) {
-            sortSelect.addEventListener('change', (e) => {
-                this.sortOrder = (e.target as HTMLSelectElement).value as SortOrder;
-                this.renderHabitsGrid();
-            });
-        }
-
-        const templateList = document.getElementById('templateList');
-        if (templateList) {
-            templateList.addEventListener('click', (e) => {
-                const card = (e.target as HTMLElement).closest('.template-card') as HTMLElement | null;
-                if (!card || !card.dataset.template) return;
-                this.handleTemplateAdd(card.dataset.template);
-            });
-        }
+        document.getElementById('sortSelect')?.addEventListener('change', (e) => {
+            this.sortOrder = (e.target as HTMLSelectElement).value as SortOrder;
+            this.renderHabitsGrid();
+        });
 
         document.getElementById('openAddModalBtn')?.addEventListener('click', () => this.openHabitModal());
         document.getElementById('closeHabitModalBtn')?.addEventListener('click', () => this.closeHabitModal());
         document.getElementById('cancelHabitModalBtn')?.addEventListener('click', () => this.closeHabitModal());
+        document.getElementById('habitForm')?.addEventListener('submit', (e) => this.handleHabitSubmit(e));
+
+        document.getElementById('openAddCategoryBtn')?.addEventListener('click', () => this.openCategoryModal());
+        document.getElementById('dropdownManageCategoriesBtn')?.addEventListener('click', () => this.openCategoryModal());
+        document.getElementById('closeCategoryModalBtn')?.addEventListener('click', () => this.closeCategoryModal());
+        document.getElementById('cancelCategoryModalBtn')?.addEventListener('click', () => this.closeCategoryModal());
+        document.getElementById('categoryForm')?.addEventListener('submit', (e) => this.handleCategorySubmit(e));
+
+        const categoryColorPicker = document.getElementById('categoryColorPickerGroup');
+        if (categoryColorPicker) {
+            categoryColorPicker.addEventListener('click', (e) => {
+                const btn = (e.target as HTMLElement).closest('.color-option') as HTMLElement | null;
+                if (!btn) return;
+                categoryColorPicker.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const catColorInput = document.getElementById('categoryColorInput') as HTMLInputElement | null;
+                if (catColorInput) catColorInput.value = btn.dataset.color || '#4f46e5';
+            });
+        }
+
+        const habitColorPicker = document.getElementById('colorPickerGroup');
+        if (habitColorPicker) {
+            habitColorPicker.addEventListener('click', (e) => {
+                const btn = (e.target as HTMLElement).closest('.color-option') as HTMLElement | null;
+                if (!btn) return;
+                habitColorPicker.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const habitColorInput = document.getElementById('habitColor') as HTMLInputElement | null;
+                if (habitColorInput) habitColorInput.value = btn.dataset.color || '#4f46e5';
+            });
+        }
 
         document.getElementById('analyticsBtn')?.addEventListener('click', () => this.openAnalyticsModal());
         document.getElementById('closeAnalyticsModalBtn')?.addEventListener('click', () => this.closeAnalyticsModal());
@@ -265,35 +337,258 @@ export class OrbitHabitTracker {
         document.getElementById('dataMenuBtn')?.addEventListener('click', () => this.openDataModal());
         document.getElementById('closeDataModalBtn')?.addEventListener('click', () => this.closeDataModal());
 
-        ['habitModal', 'analyticsModal', 'dataModal'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('click', (e) => {
-                    if (e.target === el) el.classList.remove('show');
+        ['authModal', 'categoryModal', 'habitModal', 'analyticsModal', 'dataModal'].forEach(id => {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.classList.remove('show');
                 });
             }
         });
 
-        const form = document.getElementById('habitForm') as HTMLFormElement | null;
-        if (form) {
-            form.addEventListener('submit', (e) => this.handleHabitSubmit(e));
-        }
+        document.getElementById('exportDataBtn')?.addEventListener('click', () => this.exportData());
+        document.getElementById('loadDemoDataBtn')?.addEventListener('click', () => this.loadSampleData());
+        document.getElementById('clearAllDataBtn')?.addEventListener('click', () => this.clearAllHabits());
+        document.getElementById('importFileInput')?.addEventListener('change', (e) => this.importData(e as Event));
+    }
 
-        const colorPickerGroup = document.getElementById('colorPickerGroup');
-        if (colorPickerGroup) {
-            colorPickerGroup.addEventListener('click', (e) => {
-                const btn = (e.target as HTMLElement).closest('.color-option') as HTMLElement | null;
-                if (!btn) return;
-                colorPickerGroup.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const colorInput = document.getElementById('habitColor') as HTMLInputElement | null;
-                if (colorInput) colorInput.value = btn.dataset.color || '#4f46e5';
+    public openAuthModal(): void {
+        document.getElementById('authModal')?.classList.add('show');
+    }
+
+    public closeAuthModal(): void {
+        document.getElementById('authModal')?.classList.remove('show');
+    }
+
+    private handleLogin(e: Event): void {
+        e.preventDefault();
+        const email = (document.getElementById('loginEmail') as HTMLInputElement).value.trim();
+        const name = email.split('@')[0].replace('.', ' ') || 'User';
+        const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+
+        this.currentUser = {
+            name: formattedName,
+            email: email,
+            avatarColor: '#4f46e5',
+            isGuest: false
+        };
+        this.saveUser();
+        this.updateUserUI();
+        this.updateUserGreeting();
+        this.closeAuthModal();
+        this.showToast(`Signed in as ${this.currentUser.name}`, 'success');
+    }
+
+    private handleSignUp(e: Event): void {
+        e.preventDefault();
+        const name = (document.getElementById('signUpName') as HTMLInputElement).value.trim();
+        const email = (document.getElementById('signUpEmail') as HTMLInputElement).value.trim();
+        const color = (document.getElementById('signUpAvatarColor') as HTMLInputElement).value;
+
+        this.currentUser = {
+            name: name,
+            email: email,
+            avatarColor: color,
+            isGuest: false
+        };
+        this.saveUser();
+        this.updateUserUI();
+        this.updateUserGreeting();
+        this.closeAuthModal();
+        this.showToast(`Welcome, ${this.currentUser.name}!`, 'success');
+        this.triggerConfetti();
+    }
+
+    private handleGuestLogin(): void {
+        this.currentUser = {
+            name: 'Guest Explorer',
+            email: 'guest@habittracker.app',
+            avatarColor: '#059669',
+            isGuest: true
+        };
+        this.saveUser();
+        this.updateUserUI();
+        this.updateUserGreeting();
+        this.closeAuthModal();
+        this.showToast('Continuing as Guest', 'success');
+    }
+
+    private setupIconPicker(): void {
+        const grid = document.getElementById('iconPickerGrid');
+        if (!grid) return;
+
+        const iconKeys = Object.keys(SVG_ICONS);
+        grid.innerHTML = iconKeys.map((key, index) => `
+            <button type="button" class="icon-picker-btn ${index === 0 ? 'active' : ''}" data-icon="${key}" title="${key}">
+                ${SVG_ICONS[key]}
+            </button>
+        `).join('');
+
+        grid.addEventListener('click', (e) => {
+            const btn = (e.target as HTMLElement).closest('.icon-picker-btn') as HTMLElement | null;
+            if (!btn || !btn.dataset.icon) return;
+            grid.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const iconKeyInput = document.getElementById('categoryIconKey') as HTMLInputElement | null;
+            if (iconKeyInput) iconKeyInput.value = btn.dataset.icon;
+        });
+    }
+
+    public openCategoryModal(categoryToEdit: CustomCategory | null = null): void {
+        const modal = document.getElementById('categoryModal');
+        const title = document.getElementById('categoryModalTitle');
+        const form = document.getElementById('categoryForm') as HTMLFormElement | null;
+        if (!modal || !form) return;
+
+        form.reset();
+
+        if (categoryToEdit) {
+            if (title) title.textContent = 'Edit Category';
+            (document.getElementById('editCategoryId') as HTMLInputElement).value = categoryToEdit.id;
+            (document.getElementById('categoryNameInput') as HTMLInputElement).value = categoryToEdit.name;
+            (document.getElementById('categoryIconKey') as HTMLInputElement).value = categoryToEdit.icon || 'target';
+            (document.getElementById('categoryColorInput') as HTMLInputElement).value = categoryToEdit.color || '#4f46e5';
+
+            document.querySelectorAll('#iconPickerGrid .icon-picker-btn').forEach(btn => {
+                btn.classList.toggle('active', (btn as HTMLElement).dataset.icon === categoryToEdit.icon);
+            });
+            document.querySelectorAll('#categoryColorPickerGroup .color-option').forEach(btn => {
+                btn.classList.toggle('active', (btn as HTMLElement).dataset.color === categoryToEdit.color);
+            });
+        } else {
+            if (title) title.textContent = 'Create New Category';
+            (document.getElementById('editCategoryId') as HTMLInputElement).value = '';
+            (document.getElementById('categoryIconKey') as HTMLInputElement).value = 'target';
+            (document.getElementById('categoryColorInput') as HTMLInputElement).value = '#4f46e5';
+            document.querySelectorAll('#iconPickerGrid .icon-picker-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === 0);
             });
         }
 
-        document.getElementById('exportDataBtn')?.addEventListener('click', () => this.exportData());
-        document.getElementById('loadDemoDataBtn')?.addEventListener('click', () => this.resetDemoData());
-        document.getElementById('importFileInput')?.addEventListener('change', (e) => this.importData(e as Event));
+        modal.classList.add('show');
+        document.getElementById('categoryNameInput')?.focus();
+    }
+
+    public closeCategoryModal(): void {
+        document.getElementById('categoryModal')?.classList.remove('show');
+    }
+
+    private handleCategorySubmit(e: Event): void {
+        e.preventDefault();
+        const editId = (document.getElementById('editCategoryId') as HTMLInputElement).value;
+        const name = (document.getElementById('categoryNameInput') as HTMLInputElement).value.trim();
+        const iconKey = (document.getElementById('categoryIconKey') as HTMLInputElement).value || 'target';
+        const color = (document.getElementById('categoryColorInput') as HTMLInputElement).value || '#4f46e5';
+
+        if (!name) return;
+
+        if (editId) {
+            const cat = this.categories.find(c => c.id === editId);
+            if (cat) {
+                const oldName = cat.name;
+                cat.name = name;
+                cat.icon = iconKey;
+                cat.color = color;
+                this.habits.forEach(h => {
+                    if (h.category === oldName) h.category = name;
+                });
+                this.saveHabits();
+                this.showToast(`Updated category "${name}"`, 'success');
+            }
+        } else {
+            const newCat: CustomCategory = {
+                id: 'cat_' + Date.now(),
+                name,
+                icon: iconKey,
+                color
+            };
+            this.categories.push(newCat);
+            this.showToast(`Created category "${name}"!`, 'success');
+        }
+
+        this.saveCategories();
+        this.closeCategoryModal();
+        this.render();
+    }
+
+    public deleteCategory(id: string): void {
+        const cat = this.categories.find(c => c.id === id);
+        if (!cat) return;
+
+        if (confirm(`Delete category "${cat.name}"? Habits in this category will move to "General".`)) {
+            this.categories = this.categories.filter(c => c.id !== id);
+            this.habits.forEach(h => {
+                if (h.category === cat.name) h.category = 'General';
+            });
+            this.saveCategories();
+            this.saveHabits();
+            this.render();
+            this.showToast(`Deleted category "${cat.name}"`);
+        }
+    }
+
+    private setupStarterInspirations(): void {
+        const list = document.getElementById('templateList');
+        if (!list) return;
+
+        list.innerHTML = [
+            { name: 'Hydration 2L', category: 'Health & Fitness', desc: 'Drink 2+ litres of fresh water daily', icon: 'droplet', color: '#0284c7', freq: 'daily' as HabitFrequency },
+            { name: 'Read 20 Mins', category: 'Learning', desc: 'Read tech articles or books', icon: 'book', color: '#4f46e5', freq: 'daily' as HabitFrequency },
+            { name: 'Morning Workout', category: 'Health & Fitness', desc: 'Zone 2 cardio or strength session', icon: 'dumbbell', color: '#059669', freq: 'daily' as HabitFrequency },
+            { name: 'Mindful Breathing', category: 'Mindfulness', desc: '10 min mindfulness or meditation', icon: 'feather', color: '#7c3aed', freq: 'daily' as HabitFrequency }
+        ].map(item => `
+            <button type="button" class="template-card" onclick="tracker.addStarterInspiration('${item.name}')">
+                <div class="template-card-left">
+                    <div class="template-icon-badge" style="color: ${item.color};">
+                        ${SVG_ICONS[item.icon] || SVG_ICONS['target']}
+                    </div>
+                    <div class="template-info">
+                        <span class="template-title">${item.name}</span>
+                        <span class="template-sub">${item.category} • ${item.freq}</span>
+                    </div>
+                </div>
+                <span class="template-add-pill">+ Add</span>
+            </button>
+        `).join('');
+    }
+
+    public addStarterInspiration(name: string): void {
+        const templates: Record<string, { category: string; desc: string; icon: string; color: string; freq: HabitFrequency }> = {
+            'Hydration 2L': { category: 'Health & Fitness', desc: 'Drink 2+ litres of fresh water daily', icon: 'droplet', color: '#0284c7', freq: 'daily' },
+            'Read 20 Mins': { category: 'Learning', desc: 'Read tech articles or books', icon: 'book', color: '#4f46e5', freq: 'daily' },
+            'Morning Workout': { category: 'Health & Fitness', desc: 'Zone 2 cardio or strength session', icon: 'dumbbell', color: '#059669', freq: 'daily' },
+            'Mindful Breathing': { category: 'Mindfulness', desc: '10 min mindfulness or meditation', icon: 'feather', color: '#7c3aed', freq: 'daily' }
+        };
+
+        const template = templates[name];
+        if (!template) return;
+
+        if (!this.categories.some(c => c.name === template.category)) {
+            this.categories.push({
+                id: 'cat_' + Date.now(),
+                name: template.category,
+                icon: template.icon,
+                color: template.color
+            });
+            this.saveCategories();
+        }
+
+        const newHabit: Habit = {
+            id: Date.now(),
+            name,
+            description: template.desc,
+            category: template.category,
+            frequency: template.freq,
+            color: template.color,
+            createdAt: this.getTodayStr(),
+            completions: [this.getTodayStr()]
+        };
+
+        this.habits.unshift(newHabit);
+        this.saveHabits();
+        this.render();
+        this.showToast(`Added habit: "${newHabit.name}"!`, 'success');
+        this.triggerConfetti();
     }
 
     public getTodayStr(): string {
@@ -327,15 +622,11 @@ export class OrbitHabitTracker {
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
         const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
 
-        if (!uniqueDates.includes(todayStr) && !uniqueDates.includes(yesterdayStr)) {
-            return 0;
-        }
+        if (!uniqueDates.includes(todayStr) && !uniqueDates.includes(yesterdayStr)) return 0;
 
         let streak = 0;
         let checkDate = new Date();
-        if (!uniqueDates.includes(todayStr)) {
-            checkDate = yesterdayDate;
-        }
+        if (!uniqueDates.includes(todayStr)) checkDate = yesterdayDate;
 
         while (true) {
             const checkStr = checkDate.toISOString().split('T')[0];
@@ -388,46 +679,79 @@ export class OrbitHabitTracker {
     }
 
     public render(): void {
-        this.renderCategoryFilters();
+        this.renderCategorySidebar();
+        this.renderHabitCategorySelect();
         this.renderMetrics();
         this.renderHabitsGrid();
     }
 
-    private renderCategoryFilters(): void {
+    private renderCategorySidebar(): void {
         const container = document.getElementById('categoryFilters');
         if (!container) return;
 
         const counts: Record<string, number> = { all: this.habits.length };
-        Object.keys(CATEGORIES).forEach(cat => {
-            counts[cat] = this.habits.filter(h => h.category === cat).length;
+        this.categories.forEach(cat => {
+            counts[cat.name] = this.habits.filter(h => h.category === cat.name).length;
         });
 
-        const categoriesList = [
-            { key: 'all', label: 'All Habits', icon: '🌟' },
-            ...Object.keys(CATEGORIES).map(k => ({
-                key: k,
-                label: k,
-                icon: CATEGORIES[k as HabitCategory].icon
-            }))
-        ];
+        let html = `
+            <div class="category-item-row ${this.selectedCategory === 'all' ? 'active' : ''}">
+                <button class="category-btn" onclick="tracker.setCategoryFilter('all')">
+                    <div class="category-btn-left">
+                        <span class="cat-icon-svg">${SVG_ICONS['sparkles']}</span>
+                        <span>All Habits</span>
+                    </div>
+                    <span class="category-pill-count">${counts['all'] || 0}</span>
+                </button>
+            </div>
+        `;
 
-        container.innerHTML = categoriesList.map(cat => `
-            <button class="category-btn ${this.selectedCategory === cat.key ? 'active' : ''}" data-category="${cat.key}">
-                <div class="category-btn-left">
-                    <span>${cat.icon}</span>
-                    <span>${cat.label}</span>
+        html += this.categories.map(cat => {
+            const iconSvg = SVG_ICONS[cat.icon] || SVG_ICONS['target'];
+            const isActive = this.selectedCategory === cat.name;
+
+            return `
+                <div class="category-item-row ${isActive ? 'active' : ''}">
+                    <button class="category-btn" onclick="tracker.setCategoryFilter('${cat.name}')">
+                        <div class="category-btn-left">
+                            <span class="cat-icon-svg" style="color: ${cat.color};">${iconSvg}</span>
+                            <span>${cat.name}</span>
+                        </div>
+                        <span class="category-pill-count">${counts[cat.name] || 0}</span>
+                    </button>
+                    <div class="category-item-actions">
+                        <button class="cat-action-btn" title="Edit" onclick="tracker.editCategoryById('${cat.id}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="cat-action-btn" title="Delete" onclick="tracker.deleteCategory('${cat.id}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
                 </div>
-                <span class="category-pill-count">${counts[cat.key] || 0}</span>
-            </button>
-        `).join('');
+            `;
+        }).join('');
 
-        container.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.selectedCategory = (btn as HTMLElement).dataset.category || 'all';
-                this.renderCategoryFilters();
-                this.renderHabitsGrid();
-            });
-        });
+        container.innerHTML = html;
+    }
+
+    public setCategoryFilter(catName: string): void {
+        this.selectedCategory = catName;
+        this.renderCategorySidebar();
+        this.renderHabitsGrid();
+    }
+
+    public editCategoryById(id: string): void {
+        const cat = this.categories.find(c => c.id === id);
+        if (cat) this.openCategoryModal(cat);
+    }
+
+    private renderHabitCategorySelect(): void {
+        const select = document.getElementById('habitCategorySelect') as HTMLSelectElement | null;
+        if (!select) return;
+
+        select.innerHTML = this.categories.map(cat => `
+            <option value="${cat.name}">${cat.name}</option>
+        `).join('');
     }
 
     private renderMetrics(): void {
@@ -439,7 +763,7 @@ export class OrbitHabitTracker {
         const todayProgressText = document.getElementById('todayProgressText');
         const todayCompletedText = document.getElementById('todayCompletedText');
         if (todayProgressText) todayProgressText.textContent = `${progressPercent}%`;
-        if (todayCompletedText) todayCompletedText.textContent = `${completedToday} of ${total} habits`;
+        if (todayCompletedText) todayCompletedText.textContent = `${completedToday} of ${total} completed`;
 
         const progressRing = document.getElementById('progressRingFill') as SVGCircleElement | null;
         if (progressRing) {
@@ -461,7 +785,7 @@ export class OrbitHabitTracker {
         const bestStreakValEl = document.getElementById('bestStreakValue');
         const bestStreakNameEl = document.getElementById('bestStreakName');
         if (bestStreakValEl) bestStreakValEl.textContent = bestStreak.toString();
-        if (bestStreakNameEl) bestStreakNameEl.textContent = bestStreak > 0 ? `Leading: ${bestStreakHabitName}` : 'Complete a habit to start!';
+        if (bestStreakNameEl) bestStreakNameEl.textContent = bestStreak > 0 ? `Leading: ${bestStreakHabitName}` : 'Check in to start a streak!';
 
         const totalLogs = this.habits.reduce((acc, h) => acc + (h.completions ? h.completions.length : 0), 0);
         const totalLogsEl = document.getElementById('totalCompletionsValue');
@@ -509,10 +833,24 @@ export class OrbitHabitTracker {
         if (filtered.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">✨</div>
-                    <h3>No matching habits found</h3>
-                    <p>Try adjusting your search query, selecting another category, or add a fresh habit to track!</p>
-                    <button class="btn btn-primary" onclick="tracker.openHabitModal()">+ Create New Habit</button>
+                    <div class="empty-state-icon-box">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <h3>${this.habits.length === 0 ? 'Your habit board is clean and ready' : 'No habits match your filters'}</h3>
+                    <p>${this.habits.length === 0 ? 'Start tracking your daily goals, build momentum, and master consistency. Add your first habit or pick a starter idea.' : 'Try clearing your search or switching category filters to see your habits.'}</p>
+                    <div class="empty-state-actions">
+                        <button class="btn btn-primary" onclick="tracker.openHabitModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>Create First Habit</span>
+                        </button>
+                        ${this.habits.length === 0 ? `
+                        <button class="btn btn-secondary" onclick="tracker.loadSampleData()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Load Sample Habits</span>
+                        </button>` : ''}
+                    </div>
                 </div>
             `;
             return;
@@ -524,8 +862,9 @@ export class OrbitHabitTracker {
         grid.innerHTML = filtered.map(habit => {
             const isCompletedToday = habit.completions.includes(todayStr);
             const streak = this.calculateStreak(habit);
-            const catInfo = CATEGORIES[habit.category] || { icon: '✨', color: '#4f46e5', bg: '#eef2ff' };
-            const cardAccent = habit.color || catInfo.color;
+            const catObj = this.categories.find(c => c.name === habit.category) || { name: habit.category, icon: 'target', color: '#4f46e5' };
+            const iconSvg = SVG_ICONS[catObj.icon] || SVG_ICONS['target'];
+            const cardAccent = habit.color || catObj.color;
 
             const stripHtml = rollingDays.map(day => {
                 const isChecked = habit.completions.includes(day.dateStr);
@@ -547,8 +886,8 @@ export class OrbitHabitTracker {
                             <h3 class="habit-name">${habit.name}</h3>
                             ${habit.description ? `<p class="habit-desc">${habit.description}</p>` : ''}
                             <div class="habit-meta-row">
-                                <span class="category-tag" style="--tag-bg: ${catInfo.bg}; --tag-color: ${catInfo.color};">
-                                    ${catInfo.icon} ${habit.category}
+                                <span class="category-tag" style="--tag-bg: ${catObj.color}15; --tag-color: ${catObj.color};">
+                                    ${iconSvg} ${habit.category}
                                 </span>
                                 <span class="freq-tag">${habit.frequency}</span>
                             </div>
@@ -579,15 +918,19 @@ export class OrbitHabitTracker {
 
                     <div class="habit-card-footer">
                         <div class="card-streak-info">
-                            <span class="flame-icon-box">🔥</span>
+                            <span class="flame-icon-box">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2c1.5 3 4 5.5 4 9a6 6 0 1 1-12 0c0-3.5 2.5-6 4-9 0 2 1.5 3.5 4 0z"/>
+                                </svg>
+                            </span>
                             <div class="streak-text-group">
-                                <span class="streak-count">${streak} ${streak === 1 ? 'day' : 'days'}</span>
-                                <span class="streak-sub">${habit.completions.length} total logs</span>
+                                <span class="streak-count">${streak} ${streak === 1 ? 'day' : 'days'} streak</span>
+                                <span class="streak-sub">${habit.completions.length} total check-ins</span>
                             </div>
                         </div>
 
                         <button class="check-in-btn ${isCompletedToday ? 'checked' : ''}" 
-                                onclick="tracker.toggleToday(${habit.id}, event)">
+                                onclick="tracker.toggleToday(${habit.id})">
                             ${isCompletedToday ? '✓ Done' : '+ Check In'}
                         </button>
                     </div>
@@ -596,12 +939,12 @@ export class OrbitHabitTracker {
         }).join('');
     }
 
-    public toggleToday(habitId: number, event?: Event): void {
+    public toggleToday(habitId: number): void {
         const todayStr = this.getTodayStr();
-        this.toggleDateCompletion(habitId, todayStr, event);
+        this.toggleDateCompletion(habitId, todayStr);
     }
 
-    public toggleDateCompletion(habitId: number, dateStr: string, event?: Event): void {
+    public toggleDateCompletion(habitId: number, dateStr: string): void {
         const habit = this.habits.find(h => h.id === habitId);
         if (!habit) return;
 
@@ -613,41 +956,12 @@ export class OrbitHabitTracker {
             this.showToast(`Unchecked "${habit.name}" for ${dateStr}`);
         } else {
             habit.completions.push(dateStr);
-            this.showToast(`✓ Marked "${habit.name}" complete!`, 'success');
+            this.showToast(`✓ Completed "${habit.name}"!`, 'success');
             this.triggerConfetti();
         }
 
         this.saveHabits();
         this.render();
-    }
-
-    public handleTemplateAdd(templateKey: string): void {
-        const templates: Record<string, { name: string; category: HabitCategory; desc: string; color: string }> = {
-            'water': { name: 'Hydration 2L', category: 'Health', desc: 'Drink at least 2 litres of fresh water', color: '#0284c7' },
-            'read': { name: 'Read 20 Pages', category: 'Learning', desc: 'Non-fiction books or engineering articles', color: '#4f46e5' },
-            'workout': { name: 'Morning Workout', category: 'Health', desc: 'Strength training or cardio session', color: '#059669' },
-            'meditate': { name: 'Mindful Meditation', category: 'Mindfulness', desc: '10 min mindful breathing & calm focus', color: '#7c3aed' }
-        };
-
-        const template = templates[templateKey];
-        if (!template) return;
-
-        const newHabit: Habit = {
-            id: Date.now(),
-            name: template.name,
-            description: template.desc,
-            category: template.category,
-            frequency: 'daily',
-            color: template.color,
-            createdAt: this.getTodayStr(),
-            completions: [this.getTodayStr()]
-        };
-
-        this.habits.unshift(newHabit);
-        this.saveHabits();
-        this.render();
-        this.showToast(`Added template: "${newHabit.name}"`, 'success');
-        this.triggerConfetti();
     }
 
     public openHabitModal(habitToEdit: Habit | null = null): void {
@@ -663,7 +977,7 @@ export class OrbitHabitTracker {
             (document.getElementById('editHabitId') as HTMLInputElement).value = habitToEdit.id.toString();
             (document.getElementById('habitName') as HTMLInputElement).value = habitToEdit.name;
             (document.getElementById('habitDescription') as HTMLInputElement).value = habitToEdit.description || '';
-            (document.getElementById('habitCategory') as HTMLSelectElement).value = habitToEdit.category || 'Health';
+            (document.getElementById('habitCategorySelect') as HTMLSelectElement).value = habitToEdit.category;
             (document.getElementById('habitFrequency') as HTMLSelectElement).value = habitToEdit.frequency || 'daily';
             (document.getElementById('habitColor') as HTMLInputElement).value = habitToEdit.color || '#4f46e5';
 
@@ -693,7 +1007,7 @@ export class OrbitHabitTracker {
         const editId = (document.getElementById('editHabitId') as HTMLInputElement).value;
         const name = (document.getElementById('habitName') as HTMLInputElement).value.trim();
         const description = (document.getElementById('habitDescription') as HTMLInputElement).value.trim();
-        const category = (document.getElementById('habitCategory') as HTMLSelectElement).value as HabitCategory;
+        const category = (document.getElementById('habitCategorySelect') as HTMLSelectElement).value;
         const frequency = (document.getElementById('habitFrequency') as HTMLSelectElement).value as HabitFrequency;
         const color = (document.getElementById('habitColor') as HTMLInputElement).value;
 
@@ -721,7 +1035,7 @@ export class OrbitHabitTracker {
                 completions: []
             };
             this.habits.unshift(newHabit);
-            this.showToast(`Created new habit "${name}"!`, 'success');
+            this.showToast(`Created habit "${name}"!`, 'success');
             this.triggerConfetti();
         }
 
@@ -739,12 +1053,154 @@ export class OrbitHabitTracker {
         const habit = this.habits.find(h => h.id === id);
         if (!habit) return;
 
-        if (confirm(`Are you sure you want to delete "${habit.name}"?`)) {
+        if (confirm(`Delete habit "${habit.name}"?`)) {
             this.habits = this.habits.filter(h => h.id !== id);
             this.saveHabits();
             this.render();
             this.showToast(`Deleted habit "${habit.name}"`);
         }
+    }
+
+    public loadSampleData(): void {
+        const today = new Date();
+        const getDateStr = (offset: number) => {
+            const d = new Date(today);
+            d.setDate(d.getDate() - offset);
+            return d.toISOString().split('T')[0];
+        };
+
+        this.categories = [...DEFAULT_CATEGORIES];
+        this.habits = [
+            {
+                id: 101,
+                name: "Morning 5km Jog",
+                description: "Zone 2 aerobic cardio before 8:00 AM",
+                category: "Health & Fitness",
+                frequency: "daily",
+                color: "#059669",
+                createdAt: getDateStr(30),
+                completions: [
+                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
+                    getDateStr(4), getDateStr(5), getDateStr(7), getDateStr(8),
+                    getDateStr(10), getDateStr(11), getDateStr(12), getDateStr(14)
+                ]
+            },
+            {
+                id: 102,
+                name: "Read 25 Pages",
+                description: "Software engineering & product design books",
+                category: "Learning",
+                frequency: "daily",
+                color: "#0284c7",
+                createdAt: getDateStr(25),
+                completions: [
+                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
+                    getDateStr(4), getDateStr(5), getDateStr(6), getDateStr(7),
+                    getDateStr(8), getDateStr(9), getDateStr(10), getDateStr(11)
+                ]
+            },
+            {
+                id: 103,
+                name: "Deep Work Sprint (90m)",
+                description: "Uninterrupted engineering flow state",
+                category: "Productivity",
+                frequency: "daily",
+                color: "#4f46e5",
+                createdAt: getDateStr(20),
+                completions: [
+                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
+                    getDateStr(5), getDateStr(6), getDateStr(7), getDateStr(9)
+                ]
+            },
+            {
+                id: 104,
+                name: "Mindful Meditation",
+                description: "10 minutes box breathing & mental reset",
+                category: "Mindfulness",
+                frequency: "daily",
+                color: "#7c3aed",
+                createdAt: getDateStr(18),
+                completions: [
+                    getDateStr(1), getDateStr(2), getDateStr(3), getDateStr(4),
+                    getDateStr(5), getDateStr(6), getDateStr(7)
+                ]
+            }
+        ];
+
+        this.saveCategories();
+        this.saveHabits();
+        this.render();
+        this.closeDataModal();
+        this.showToast('Loaded sample habit data!', 'success');
+        this.triggerConfetti();
+    }
+
+    public clearAllHabits(): void {
+        if (confirm('Are you sure you want to clear all habits? This action cannot be undone.')) {
+            this.habits = [];
+            this.saveHabits();
+            this.render();
+            this.closeDataModal();
+            this.showToast('Cleared all habits.');
+        }
+    }
+
+    public openDataModal(): void {
+        document.getElementById('dataModal')?.classList.add('show');
+    }
+
+    public closeDataModal(): void {
+        document.getElementById('dataModal')?.classList.remove('show');
+    }
+
+    public exportData(): void {
+        const payload = {
+            user: this.currentUser,
+            categories: this.categories,
+            habits: this.habits,
+            exportedAt: new Date().toISOString()
+        };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `habit-tracker-backup-${this.getTodayStr()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        this.showToast('Data exported successfully!', 'success');
+    }
+
+    public importData(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parsed = JSON.parse(e.target?.result as string);
+                if (parsed.habits && Array.isArray(parsed.habits)) {
+                    this.habits = parsed.habits;
+                    if (parsed.categories && Array.isArray(parsed.categories)) {
+                        this.categories = parsed.categories;
+                    }
+                    this.saveCategories();
+                    this.saveHabits();
+                    this.render();
+                    this.closeDataModal();
+                    this.showToast('Backup restored successfully!', 'success');
+                } else if (Array.isArray(parsed)) {
+                    this.habits = parsed;
+                    this.saveHabits();
+                    this.render();
+                    this.closeDataModal();
+                    this.showToast('Habits imported!', 'success');
+                }
+            } catch (err) {
+                alert('Invalid JSON file format.');
+            }
+        };
+        reader.readAsText(file);
     }
 
     public openAnalyticsModal(): void {
@@ -791,7 +1247,7 @@ export class OrbitHabitTracker {
         if (!container) return;
 
         if (this.habits.length === 0) {
-            container.innerHTML = `<p style="color: var(--text-light); text-align: center; padding: 20px;">No habit data available</p>`;
+            container.innerHTML = `<p style="color: var(--text-light); text-align: center; padding: 20px;">No habit activity to display yet.</p>`;
             return;
         }
 
@@ -799,14 +1255,14 @@ export class OrbitHabitTracker {
             const streak = this.calculateStreak(habit);
             const bestStreak = this.calculateBestStreak(habit);
             const completionRate = Math.min(100, Math.round((habit.completions.length / 30) * 100));
-            const catInfo = CATEGORIES[habit.category] || { color: '#4f46e5' };
-            const barColor = habit.color || catInfo.color;
+            const catObj = this.categories.find(c => c.name === habit.category) || { color: '#4f46e5' };
+            const barColor = habit.color || catObj.color;
 
             return `
                 <div class="breakdown-item">
                     <div class="breakdown-top">
                         <span class="breakdown-title">${habit.name}</span>
-                        <span class="breakdown-stats">Streak: ${streak}d | Best: ${bestStreak}d | ${habit.completions.length} logs</span>
+                        <span class="breakdown-stats">Streak: ${streak}d | Best: ${bestStreak}d | ${habit.completions.length} check-ins</span>
                     </div>
                     <div class="breakdown-bar-track">
                         <div class="breakdown-bar-fill" style="width: ${completionRate}%; background-color: ${barColor};"></div>
@@ -814,61 +1270,6 @@ export class OrbitHabitTracker {
                 </div>
             `;
         }).join('');
-    }
-
-    public openDataModal(): void {
-        document.getElementById('dataModal')?.classList.add('show');
-    }
-
-    public closeDataModal(): void {
-        document.getElementById('dataModal')?.classList.remove('show');
-    }
-
-    public exportData(): void {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.habits, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `orbit-habits-backup-${this.getTodayStr()}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        this.showToast('Data exported successfully!', 'success');
-    }
-
-    public importData(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const parsed = JSON.parse(e.target?.result as string);
-                if (Array.isArray(parsed)) {
-                    this.habits = parsed;
-                    this.saveHabits();
-                    this.render();
-                    this.closeDataModal();
-                    this.showToast('Data imported successfully!', 'success');
-                } else {
-                    alert('Invalid file format. JSON array expected.');
-                }
-            } catch (err) {
-                alert('Failed to parse JSON backup file.');
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    public resetDemoData(): void {
-        if (confirm('Reset your habit list with fresh sample data?')) {
-            this.habits = this.generateDemoHabits();
-            this.saveHabits();
-            this.render();
-            this.closeDataModal();
-            this.showToast('Reset to demo habits!', 'success');
-            this.triggerConfetti();
-        }
     }
 
     private setupConfetti(): void {
@@ -887,9 +1288,7 @@ export class OrbitHabitTracker {
         if (!this.ctx || !this.canvas) return;
 
         const colors = ['#4f46e5', '#059669', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6'];
-        const numParticles = 60;
-
-        for (let i = 0; i < numParticles; i++) {
+        for (let i = 0; i < 60; i++) {
             this.confettiParticles.push({
                 x: window.innerWidth / 2 + (Math.random() - 0.5) * 200,
                 y: window.innerHeight * 0.4,
@@ -903,14 +1302,11 @@ export class OrbitHabitTracker {
             });
         }
 
-        if (!this.animationId) {
-            this.animateConfetti();
-        }
+        if (!this.animationId) this.animateConfetti();
     }
 
     private animateConfetti(): void {
         if (!this.ctx || !this.canvas) return;
-
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         for (let i = this.confettiParticles.length - 1; i >= 0; i--) {
@@ -961,14 +1357,13 @@ export class OrbitHabitTracker {
     }
 }
 
-// Global window declaration for direct DOM event handling
 declare global {
     interface Window {
-        tracker: OrbitHabitTracker;
+        tracker: HabitTrackerApp;
     }
 }
 
-const tracker = new OrbitHabitTracker();
+const tracker = new HabitTrackerApp();
 if (typeof window !== 'undefined') {
     window.tracker = tracker;
 }

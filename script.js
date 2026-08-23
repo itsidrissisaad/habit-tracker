@@ -1,19 +1,34 @@
 /**
- * Orbit Habit Tracker
- * Professional Vanilla JS / TypeScript Application
+ * Habit Tracker - Core Application Engine
+ * Pure Vanilla JavaScript / Modern Browser Standard
  */
 
-// Category Definitions with color themes and icons
-const CATEGORIES = {
-    'Health': { icon: '🏃', color: '#059669', bg: '#ecfdf5' },
-    'Productivity': { icon: '💼', color: '#4f46e5', bg: '#eef2ff' },
-    'Learning': { icon: '📚', color: '#0284c7', bg: '#f0f9ff' },
-    'Mindfulness': { icon: '🧘', color: '#7c3aed', bg: '#f5f3ff' },
-    'Finance': { icon: '💰', color: '#d97706', bg: '#fffbeb' },
-    'Lifestyle': { icon: '✨', color: '#e11d48', bg: '#fff1f2' }
+// Library of Professional Vector SVG Icons (No Emojis)
+const SVG_ICONS = {
+    'target': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+    'activity': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+    'book': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`,
+    'briefcase': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+    'dumbbell': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path><path d="m3 10 7-7"></path><path d="m14 21 7-7"></path></svg>`,
+    'feather': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>`,
+    'wallet': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>`,
+    'coffee': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>`,
+    'code': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>`,
+    'sparkles': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>`,
+    'sun': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`,
+    'droplet': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>`
 };
 
-// Inspirational Quotes
+// Default Starter Categories
+const DEFAULT_CATEGORIES = [
+    { id: 'cat_health', name: 'Health & Fitness', icon: 'activity', color: '#059669' },
+    { id: 'cat_productivity', name: 'Productivity', icon: 'briefcase', color: '#4f46e5' },
+    { id: 'cat_learning', name: 'Learning', icon: 'book', color: '#0284c7' },
+    { id: 'cat_wellness', name: 'Mindfulness', icon: 'feather', color: '#7c3aed' },
+    { id: 'cat_finance', name: 'Finance', icon: 'wallet', color: '#d97706' }
+];
+
+// Motivational Quotes
 const MOTIVATIONAL_QUOTES = [
     '"We are what we repeatedly do. Excellence, then, is not an act, but a habit."',
     '"Small disciplines repeated with consistency every day lead to great achievements."',
@@ -22,85 +37,25 @@ const MOTIVATIONAL_QUOTES = [
     '"Focus on the process, and the results will naturally follow."'
 ];
 
-// Curated Demo Data for instant presentation
-function generateDemoHabits() {
-    const today = new Date();
-    const getDateStr = (offsetDays) => {
-        const d = new Date(today);
-        d.setDate(d.getDate() - offsetDays);
-        return d.toISOString().split('T')[0];
-    };
+// Starter Inspirations Ideas (Clarified with vector icons)
+const STARTER_INSPIRATIONS = [
+    { name: 'Hydration 2L', category: 'Health & Fitness', desc: 'Drink 2+ litres of fresh water daily', icon: 'droplet', color: '#0284c7', freq: 'daily' },
+    { name: 'Read 20 Mins', category: 'Learning', desc: 'Read tech articles or books', icon: 'book', color: '#4f46e5', freq: 'daily' },
+    { name: 'Morning Workout', category: 'Health & Fitness', desc: 'Zone 2 cardio or strength session', icon: 'dumbbell', color: '#059669', freq: 'daily' },
+    { name: 'Mindful Breathing', category: 'Mindfulness', desc: '10 min mindfulness or meditation', icon: 'feather', color: '#7c3aed', freq: 'daily' }
+];
 
-    return [
-        {
-            id: 101,
-            name: "Morning 5km Run",
-            description: "Zone 2 aerobic cardio before 8:00 AM",
-            category: "Health",
-            frequency: "daily",
-            color: "#059669",
-            createdAt: getDateStr(30),
-            completions: [
-                getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                getDateStr(4), getDateStr(5), getDateStr(7), getDateStr(8),
-                getDateStr(10), getDateStr(11), getDateStr(12), getDateStr(14),
-                getDateStr(15), getDateStr(16), getDateStr(18), getDateStr(19)
-            ]
-        },
-        {
-            id: 102,
-            name: "Read 25 Pages",
-            description: "Software design patterns & tech articles",
-            category: "Learning",
-            frequency: "daily",
-            color: "#0284c7",
-            createdAt: getDateStr(25),
-            completions: [
-                getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                getDateStr(4), getDateStr(5), getDateStr(6), getDateStr(7),
-                getDateStr(8), getDateStr(9), getDateStr(10), getDateStr(11),
-                getDateStr(12), getDateStr(13), getDateStr(14)
-            ]
-        },
-        {
-            id: 103,
-            name: "Deep Work Block (90 min)",
-            description: "Uninterrupted engineering flow state",
-            category: "Productivity",
-            frequency: "daily",
-            color: "#4f46e5",
-            createdAt: getDateStr(20),
-            completions: [
-                getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
-                getDateStr(5), getDateStr(6), getDateStr(7), getDateStr(9),
-                getDateStr(10), getDateStr(12)
-            ]
-        },
-        {
-            id: 104,
-            name: "Daily Mindfulness & Meditation",
-            description: "10 minutes box breathing & mental reset",
-            category: "Mindfulness",
-            frequency: "daily",
-            color: "#7c3aed",
-            createdAt: getDateStr(18),
-            completions: [
-                getDateStr(1), getDateStr(2), getDateStr(3), getDateStr(4),
-                getDateStr(5), getDateStr(6), getDateStr(7), getDateStr(8)
-            ]
-        }
-    ];
-}
-
-class OrbitHabitTracker {
+class HabitTrackerApp {
     constructor() {
         this.habits = [];
+        this.categories = [];
+        this.currentUser = null;
         this.selectedCategory = 'all';
         this.selectedFrequency = 'all';
         this.selectedStatus = 'all';
         this.searchQuery = '';
         this.sortOrder = 'streak';
-        this.storageKey = 'orbit_habits_v2';
+
         this.canvas = document.getElementById('confettiCanvas');
         this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
         this.confettiParticles = [];
@@ -110,50 +65,70 @@ class OrbitHabitTracker {
     }
 
     init() {
+        this.loadUser();
+        this.loadCategories();
         this.loadHabits();
-        this.setupGreeting();
+        this.setupIconPicker();
+        this.setupStarterInspirations();
         this.setupEventListeners();
         this.setupConfetti();
+        this.updateUserGreeting();
         this.render();
     }
 
     /* --------------------------------------------------------------------------
-       STORAGE & DATA MANAGEMENT
+       AUTHENTICATION & USER SESSION
        -------------------------------------------------------------------------- */
-    loadHabits() {
-        try {
-            const raw = localStorage.getItem(this.storageKey);
-            if (raw) {
-                this.habits = JSON.parse(raw);
-            } else {
-                this.habits = generateDemoHabits();
-                this.saveHabits();
+    loadUser() {
+        const rawUser = localStorage.getItem('habit_tracker_user');
+        if (rawUser) {
+            try {
+                this.currentUser = JSON.parse(rawUser);
+            } catch (e) {
+                this.currentUser = { name: 'Alex Rivera', email: 'alex@example.com', avatarColor: '#4f46e5', isGuest: false };
             }
-        } catch (e) {
-            console.error("Failed to parse habits from storage", e);
-            this.habits = generateDemoHabits();
+        } else {
+            this.currentUser = { name: 'Guest User', email: 'guest@habittracker.app', avatarColor: '#4f46e5', isGuest: true };
+            this.saveUser();
         }
+        this.updateUserUI();
     }
 
-    saveHabits() {
-        try {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.habits));
-        } catch (e) {
-            console.error("Failed to save habits to storage", e);
-        }
+    saveUser() {
+        localStorage.setItem('habit_tracker_user', JSON.stringify(this.currentUser));
     }
 
-    /* --------------------------------------------------------------------------
-       UI INITIALIZATION & GREETINGS
-       -------------------------------------------------------------------------- */
-    setupGreeting() {
+    updateUserUI() {
+        if (!this.currentUser) return;
+        const nameLabel = document.getElementById('userNameLabel');
+        const avatarCircle = document.getElementById('userAvatarCircle');
+        const dropdownName = document.getElementById('dropdownUserName');
+        const dropdownEmail = document.getElementById('dropdownUserEmail');
+        const authText = document.getElementById('dropdownAuthText');
+
+        const initials = this.currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
+
+        if (nameLabel) nameLabel.textContent = this.currentUser.name;
+        if (avatarCircle) {
+            avatarCircle.textContent = initials;
+            avatarCircle.style.backgroundColor = this.currentUser.avatarColor || '#4f46e5';
+        }
+        if (dropdownName) dropdownName.textContent = this.currentUser.name;
+        if (dropdownEmail) dropdownEmail.textContent = this.currentUser.email;
+        if (authText) authText.textContent = this.currentUser.isGuest ? 'Sign In / Sign Up' : 'Switch Account / Log Out';
+    }
+
+    updateUserGreeting() {
         const hour = new Date().getHours();
         let greeting = "Good morning";
         if (hour >= 12 && hour < 17) greeting = "Good afternoon";
         else if (hour >= 17) greeting = "Good evening";
 
         const greetingEl = document.getElementById('greetingTime');
-        if (greetingEl) greetingEl.textContent = `${greeting}, Ready to build habits?`;
+        if (greetingEl) {
+            const firstName = this.currentUser ? this.currentUser.name.split(' ')[0] : 'there';
+            greetingEl.textContent = `${greeting}, ${firstName}! 👋`;
+        }
 
         const quoteEl = document.getElementById('headerQuote');
         if (quoteEl) {
@@ -161,20 +136,110 @@ class OrbitHabitTracker {
         }
     }
 
+    /* --------------------------------------------------------------------------
+       STORAGE (CATEGORIES & HABITS)
+       -------------------------------------------------------------------------- */
+    loadCategories() {
+        try {
+            const raw = localStorage.getItem('habit_tracker_categories');
+            if (raw) {
+                this.categories = JSON.parse(raw);
+            } else {
+                this.categories = [...DEFAULT_CATEGORIES];
+                this.saveCategories();
+            }
+        } catch (e) {
+            this.categories = [...DEFAULT_CATEGORIES];
+        }
+    }
+
+    saveCategories() {
+        localStorage.setItem('habit_tracker_categories', JSON.stringify(this.categories));
+    }
+
+    loadHabits() {
+        try {
+            const raw = localStorage.getItem('habit_tracker_habits');
+            if (raw) {
+                this.habits = JSON.parse(raw);
+            } else {
+                // Empty by default as requested!
+                this.habits = [];
+            }
+        } catch (e) {
+            this.habits = [];
+        }
+    }
+
+    saveHabits() {
+        localStorage.setItem('habit_tracker_habits', JSON.stringify(this.habits));
+    }
+
+    /* --------------------------------------------------------------------------
+       EVENT LISTENERS & UI WIRING
+       -------------------------------------------------------------------------- */
     setupEventListeners() {
-        // Search Input
+        // User Profile Dropdown Toggle
+        const userBtn = document.getElementById('userProfileBtn');
+        const userMenu = document.getElementById('userDropdownMenu');
+        if (userBtn && userMenu) {
+            userBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userMenu.classList.toggle('show');
+            });
+            document.addEventListener('click', () => userMenu.classList.remove('show'));
+        }
+
+        // Auth Modal Triggers
+        document.getElementById('dropdownAuthBtn')?.addEventListener('click', () => this.openAuthModal());
+        document.getElementById('closeAuthModalBtn')?.addEventListener('click', () => this.closeAuthModal());
+
+        // Auth Tabs
+        const tabLoginBtn = document.getElementById('tabLoginBtn');
+        const tabSignUpBtn = document.getElementById('tabSignUpBtn');
+        const loginForm = document.getElementById('loginForm');
+        const signUpForm = document.getElementById('signUpForm');
+
+        tabLoginBtn?.addEventListener('click', () => {
+            tabLoginBtn.classList.add('active');
+            tabSignUpBtn?.classList.remove('active');
+            loginForm.style.display = 'flex';
+            signUpForm.style.display = 'none';
+        });
+
+        tabSignUpBtn?.addEventListener('click', () => {
+            tabSignUpBtn.classList.add('active');
+            tabLoginBtn?.classList.remove('active');
+            signUpForm.style.display = 'flex';
+            loginForm.style.display = 'none';
+        });
+
+        loginForm?.addEventListener('submit', (e) => this.handleLogin(e));
+        signUpForm?.addEventListener('submit', (e) => this.handleSignUp(e));
+        document.getElementById('guestLoginBtn')?.addEventListener('click', () => this.handleGuestLogin());
+
+        // Avatar Color Picker in Sign Up
+        const userColorPicker = document.getElementById('userAvatarColorPicker');
+        if (userColorPicker) {
+            userColorPicker.addEventListener('click', (e) => {
+                const btn = e.target.closest('.color-option');
+                if (!btn) return;
+                userColorPicker.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('signUpAvatarColor').value = btn.dataset.color || '#4f46e5';
+            });
+        }
+
+        // Search Box
         const searchInput = document.getElementById('searchInput');
         const clearSearchBtn = document.getElementById('clearSearchBtn');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.searchQuery = e.target.value.toLowerCase().trim();
-                if (clearSearchBtn) {
-                    clearSearchBtn.style.display = this.searchQuery ? 'block' : 'none';
-                }
+                if (clearSearchBtn) clearSearchBtn.style.display = this.searchQuery ? 'block' : 'none';
                 this.renderHabitsGrid();
             });
         }
-
         if (clearSearchBtn) {
             clearSearchBtn.addEventListener('click', () => {
                 if (searchInput) searchInput.value = '';
@@ -184,101 +249,340 @@ class OrbitHabitTracker {
             });
         }
 
-        // Frequency Filter Buttons
+        // Frequency Filter
         const freqContainer = document.getElementById('frequencyFilters');
         if (freqContainer) {
             freqContainer.addEventListener('click', (e) => {
-                const target = e.target.closest('.filter-pill');
-                if (!target) return;
-                freqContainer.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
-                target.classList.add('active');
-                this.selectedFrequency = target.dataset.freq || 'all';
+                const btn = e.target.closest('.filter-pill');
+                if (!btn) return;
+                freqContainer.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedFrequency = btn.dataset.freq || 'all';
                 this.renderHabitsGrid();
             });
         }
 
-        // Status Segmented Control
+        // Status Segment Control
         const statusControl = document.getElementById('statusFilterControl');
         if (statusControl) {
             statusControl.addEventListener('click', (e) => {
-                const target = e.target.closest('.segment-btn');
-                if (!target) return;
-                statusControl.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
-                target.classList.add('active');
-                this.selectedStatus = target.dataset.status || 'all';
+                const btn = e.target.closest('.segment-btn');
+                if (!btn) return;
+                statusControl.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.selectedStatus = btn.dataset.status || 'all';
                 this.renderHabitsGrid();
             });
         }
 
-        // Sort Select Dropdown
-        const sortSelect = document.getElementById('sortSelect');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', (e) => {
-                this.sortOrder = e.target.value;
-                this.renderHabitsGrid();
-            });
-        }
+        // Sort Select
+        document.getElementById('sortSelect')?.addEventListener('change', (e) => {
+            this.sortOrder = e.target.value;
+            this.renderHabitsGrid();
+        });
 
-        // Quick Template Cards
-        const templateList = document.getElementById('templateList');
-        if (templateList) {
-            templateList.addEventListener('click', (e) => {
-                const card = e.target.closest('.template-card');
-                if (!card) return;
-                this.handleTemplateAdd(card.dataset.template);
-            });
-        }
-
-        // Modals & Triggers
+        // Habit Modal Triggers
         document.getElementById('openAddModalBtn')?.addEventListener('click', () => this.openHabitModal());
         document.getElementById('closeHabitModalBtn')?.addEventListener('click', () => this.closeHabitModal());
         document.getElementById('cancelHabitModalBtn')?.addEventListener('click', () => this.closeHabitModal());
+        document.getElementById('habitForm')?.addEventListener('submit', (e) => this.handleHabitSubmit(e));
 
+        // Category Modal Triggers
+        document.getElementById('openAddCategoryBtn')?.addEventListener('click', () => this.openCategoryModal());
+        document.getElementById('dropdownManageCategoriesBtn')?.addEventListener('click', () => this.openCategoryModal());
+        document.getElementById('closeCategoryModalBtn')?.addEventListener('click', () => this.closeCategoryModal());
+        document.getElementById('cancelCategoryModalBtn')?.addEventListener('click', () => this.closeCategoryModal());
+        document.getElementById('categoryForm')?.addEventListener('submit', (e) => this.handleCategorySubmit(e));
+
+        // Category Color Picker
+        const categoryColorPicker = document.getElementById('categoryColorPickerGroup');
+        if (categoryColorPicker) {
+            categoryColorPicker.addEventListener('click', (e) => {
+                const btn = e.target.closest('.color-option');
+                if (!btn) return;
+                categoryColorPicker.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('categoryColorInput').value = btn.dataset.color || '#4f46e5';
+            });
+        }
+
+        // Habit Color Picker
+        const habitColorPicker = document.getElementById('colorPickerGroup');
+        if (habitColorPicker) {
+            habitColorPicker.addEventListener('click', (e) => {
+                const btn = e.target.closest('.color-option');
+                if (!btn) return;
+                habitColorPicker.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('habitColor').value = btn.dataset.color || '#4f46e5';
+            });
+        }
+
+        // Analytics & Data Modals
         document.getElementById('analyticsBtn')?.addEventListener('click', () => this.openAnalyticsModal());
         document.getElementById('closeAnalyticsModalBtn')?.addEventListener('click', () => this.closeAnalyticsModal());
 
         document.getElementById('dataMenuBtn')?.addEventListener('click', () => this.openDataModal());
         document.getElementById('closeDataModalBtn')?.addEventListener('click', () => this.closeDataModal());
 
-        // Close on background click
-        ['habitModal', 'analyticsModal', 'dataModal'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('click', (e) => {
-                    if (e.target === el) {
-                        el.classList.remove('show');
-                    }
+        // Background click to close modals
+        ['authModal', 'categoryModal', 'habitModal', 'analyticsModal', 'dataModal'].forEach(id => {
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.classList.remove('show');
                 });
             }
         });
 
-        // Add / Edit Habit Form
-        const form = document.getElementById('habitForm');
-        if (form) {
-            form.addEventListener('submit', (e) => this.handleHabitSubmit(e));
-        }
-
-        // Color Picker Options
-        const colorPickerGroup = document.getElementById('colorPickerGroup');
-        if (colorPickerGroup) {
-            colorPickerGroup.addEventListener('click', (e) => {
-                const btn = e.target.closest('.color-option');
-                if (!btn) return;
-                colorPickerGroup.querySelectorAll('.color-option').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const colorInput = document.getElementById('habitColor');
-                if (colorInput) colorInput.value = btn.dataset.color || '#4f46e5';
-            });
-        }
-
         // Data actions
         document.getElementById('exportDataBtn')?.addEventListener('click', () => this.exportData());
-        document.getElementById('loadDemoDataBtn')?.addEventListener('click', () => this.resetDemoData());
+        document.getElementById('loadDemoDataBtn')?.addEventListener('click', () => this.loadSampleData());
+        document.getElementById('clearAllDataBtn')?.addEventListener('click', () => this.clearAllHabits());
         document.getElementById('importFileInput')?.addEventListener('change', (e) => this.importData(e));
     }
 
     /* --------------------------------------------------------------------------
-       CALCULATION HELPERS & METRICS
+       AUTH HANDLERS
+       -------------------------------------------------------------------------- */
+    openAuthModal() {
+        document.getElementById('authModal')?.classList.add('show');
+    }
+
+    closeAuthModal() {
+        document.getElementById('authModal')?.classList.remove('show');
+    }
+
+    handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const name = email.split('@')[0].replace('.', ' ') || 'User';
+        const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+
+        this.currentUser = {
+            name: formattedName,
+            email: email,
+            avatarColor: '#4f46e5',
+            isGuest: false
+        };
+        this.saveUser();
+        this.updateUserUI();
+        this.updateUserGreeting();
+        this.closeAuthModal();
+        this.showToast(`Signed in as ${this.currentUser.name}`, 'success');
+    }
+
+    handleSignUp(e) {
+        e.preventDefault();
+        const name = document.getElementById('signUpName').value.trim();
+        const email = document.getElementById('signUpEmail').value.trim();
+        const color = document.getElementById('signUpAvatarColor').value;
+
+        this.currentUser = {
+            name: name,
+            email: email,
+            avatarColor: color,
+            isGuest: false
+        };
+        this.saveUser();
+        this.updateUserUI();
+        this.updateUserGreeting();
+        this.closeAuthModal();
+        this.showToast(`Welcome, ${this.currentUser.name}!`, 'success');
+        this.triggerConfetti();
+    }
+
+    handleGuestLogin() {
+        this.currentUser = {
+            name: 'Guest Explorer',
+            email: 'guest@habittracker.app',
+            avatarColor: '#059669',
+            isGuest: true
+        };
+        this.saveUser();
+        this.updateUserUI();
+        this.updateUserGreeting();
+        this.closeAuthModal();
+        this.showToast('Continuing as Guest', 'success');
+    }
+
+    /* --------------------------------------------------------------------------
+       CATEGORY CUSTOMIZATION & CRUD
+       -------------------------------------------------------------------------- */
+    setupIconPicker() {
+        const grid = document.getElementById('iconPickerGrid');
+        if (!grid) return;
+
+        const iconKeys = Object.keys(SVG_ICONS);
+        grid.innerHTML = iconKeys.map((key, index) => `
+            <button type="button" class="icon-picker-btn ${index === 0 ? 'active' : ''}" data-icon="${key}" title="${key}">
+                ${SVG_ICONS[key]}
+            </button>
+        `).join('');
+
+        grid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.icon-picker-btn');
+            if (!btn) return;
+            grid.querySelectorAll('.icon-picker-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('categoryIconKey').value = btn.dataset.icon;
+        });
+    }
+
+    openCategoryModal(categoryToEdit = null) {
+        const modal = document.getElementById('categoryModal');
+        const title = document.getElementById('categoryModalTitle');
+        const form = document.getElementById('categoryForm');
+        if (!modal || !form) return;
+
+        form.reset();
+
+        if (categoryToEdit) {
+            if (title) title.textContent = 'Edit Category';
+            document.getElementById('editCategoryId').value = categoryToEdit.id;
+            document.getElementById('categoryNameInput').value = categoryToEdit.name;
+            document.getElementById('categoryIconKey').value = categoryToEdit.icon || 'target';
+            document.getElementById('categoryColorInput').value = categoryToEdit.color || '#4f46e5';
+
+            // Select icon
+            document.querySelectorAll('#iconPickerGrid .icon-picker-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.icon === categoryToEdit.icon);
+            });
+            // Select color
+            document.querySelectorAll('#categoryColorPickerGroup .color-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.color === categoryToEdit.color);
+            });
+        } else {
+            if (title) title.textContent = 'Create New Category';
+            document.getElementById('editCategoryId').value = '';
+            document.getElementById('categoryIconKey').value = 'target';
+            document.getElementById('categoryColorInput').value = '#4f46e5';
+            document.querySelectorAll('#iconPickerGrid .icon-picker-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === 0);
+            });
+        }
+
+        modal.classList.add('show');
+        document.getElementById('categoryNameInput')?.focus();
+    }
+
+    closeCategoryModal() {
+        document.getElementById('categoryModal')?.classList.remove('show');
+    }
+
+    handleCategorySubmit(e) {
+        e.preventDefault();
+        const editId = document.getElementById('editCategoryId').value;
+        const name = document.getElementById('categoryNameInput').value.trim();
+        const iconKey = document.getElementById('categoryIconKey').value || 'target';
+        const color = document.getElementById('categoryColorInput').value || '#4f46e5';
+
+        if (!name) return;
+
+        if (editId) {
+            const cat = this.categories.find(c => c.id === editId);
+            if (cat) {
+                const oldName = cat.name;
+                cat.name = name;
+                cat.icon = iconKey;
+                cat.color = color;
+                // Update habits using this category
+                this.habits.forEach(h => {
+                    if (h.category === oldName) h.category = name;
+                });
+                this.saveHabits();
+                this.showToast(`Updated category "${name}"`, 'success');
+            }
+        } else {
+            const newCat = {
+                id: 'cat_' + Date.now(),
+                name,
+                icon: iconKey,
+                color
+            };
+            this.categories.push(newCat);
+            this.showToast(`Created category "${name}"!`, 'success');
+        }
+
+        this.saveCategories();
+        this.closeCategoryModal();
+        this.render();
+    }
+
+    deleteCategory(id) {
+        const cat = this.categories.find(c => c.id === id);
+        if (!cat) return;
+
+        if (confirm(`Delete category "${cat.name}"? Habits in this category will move to "General".`)) {
+            this.categories = this.categories.filter(c => c.id !== id);
+            this.habits.forEach(h => {
+                if (h.category === cat.name) h.category = 'General';
+            });
+            this.saveCategories();
+            this.saveHabits();
+            this.render();
+            this.showToast(`Deleted category "${cat.name}"`);
+        }
+    }
+
+    /* --------------------------------------------------------------------------
+       STARTER INSPIRATIONS (CLARIFIED SECTION)
+       -------------------------------------------------------------------------- */
+    setupStarterInspirations() {
+        const list = document.getElementById('templateList');
+        if (!list) return;
+
+        list.innerHTML = STARTER_INSPIRATIONS.map(item => `
+            <button type="button" class="template-card" onclick="tracker.addStarterInspiration('${item.name}')">
+                <div class="template-card-left">
+                    <div class="template-icon-badge" style="color: ${item.color};">
+                        ${SVG_ICONS[item.icon] || SVG_ICONS['target']}
+                    </div>
+                    <div class="template-info">
+                        <span class="template-title">${item.name}</span>
+                        <span class="template-sub">${item.category} • ${item.freq}</span>
+                    </div>
+                </div>
+                <span class="template-add-pill">+ Add</span>
+            </button>
+        `).join('');
+    }
+
+    addStarterInspiration(name) {
+        const template = STARTER_INSPIRATIONS.find(t => t.name === name);
+        if (!template) return;
+
+        // Ensure category exists
+        if (!this.categories.some(c => c.name === template.category)) {
+            this.categories.push({
+                id: 'cat_' + Date.now(),
+                name: template.category,
+                icon: template.icon,
+                color: template.color
+            });
+            this.saveCategories();
+        }
+
+        const newHabit = {
+            id: Date.now(),
+            name: template.name,
+            description: template.desc,
+            category: template.category,
+            frequency: template.freq,
+            color: template.color,
+            createdAt: this.getTodayStr(),
+            completions: [this.getTodayStr()]
+        };
+
+        this.habits.unshift(newHabit);
+        this.saveHabits();
+        this.render();
+        this.showToast(`Added habit: "${newHabit.name}"!`, 'success');
+        this.triggerConfetti();
+    }
+
+    /* --------------------------------------------------------------------------
+       CALCULATION HELPERS
        -------------------------------------------------------------------------- */
     getTodayStr() {
         return new Date().toISOString().split('T')[0];
@@ -311,16 +615,13 @@ class OrbitHabitTracker {
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
         const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
 
-        // If not completed today or yesterday, streak is 0
         if (!uniqueDates.includes(todayStr) && !uniqueDates.includes(yesterdayStr)) {
             return 0;
         }
 
         let streak = 0;
         let checkDate = new Date();
-        if (!uniqueDates.includes(todayStr)) {
-            checkDate = yesterdayDate;
-        }
+        if (!uniqueDates.includes(todayStr)) checkDate = yesterdayDate;
 
         while (true) {
             const checkStr = checkDate.toISOString().split('T')[0];
@@ -360,14 +661,12 @@ class OrbitHabitTracker {
     calculateConsistencyScore() {
         if (this.habits.length === 0) return 0;
         const rollingDays = this.getRolling7Days();
-        let totalPossible = this.habits.length * 7;
+        const totalPossible = this.habits.length * 7;
         let totalCompleted = 0;
 
         this.habits.forEach(habit => {
             rollingDays.forEach(day => {
-                if (habit.completions.includes(day.dateStr)) {
-                    totalCompleted++;
-                }
+                if (habit.completions.includes(day.dateStr)) totalCompleted++;
             });
         });
 
@@ -378,47 +677,80 @@ class OrbitHabitTracker {
        RENDER METHODS
        -------------------------------------------------------------------------- */
     render() {
-        this.renderCategoryFilters();
+        this.renderCategorySidebar();
+        this.renderHabitCategorySelect();
         this.renderMetrics();
         this.renderHabitsGrid();
     }
 
-    renderCategoryFilters() {
+    renderCategorySidebar() {
         const container = document.getElementById('categoryFilters');
         if (!container) return;
 
         // Calculate counts
         const counts = { all: this.habits.length };
-        Object.keys(CATEGORIES).forEach(cat => {
-            counts[cat] = this.habits.filter(h => h.category === cat).length;
+        this.categories.forEach(cat => {
+            counts[cat.name] = this.habits.filter(h => h.category === cat.name).length;
         });
 
-        const categoriesList = [
-            { key: 'all', label: 'All Habits', icon: '🌟' },
-            ...Object.keys(CATEGORIES).map(k => ({
-                key: k,
-                label: k,
-                icon: CATEGORIES[k].icon
-            }))
-        ];
+        let html = `
+            <div class="category-item-row ${this.selectedCategory === 'all' ? 'active' : ''}">
+                <button class="category-btn" onclick="tracker.setCategoryFilter('all')">
+                    <div class="category-btn-left">
+                        <span class="cat-icon-svg">${SVG_ICONS['sparkles']}</span>
+                        <span>All Habits</span>
+                    </div>
+                    <span class="category-pill-count">${counts['all'] || 0}</span>
+                </button>
+            </div>
+        `;
 
-        container.innerHTML = categoriesList.map(cat => `
-            <button class="category-btn ${this.selectedCategory === cat.key ? 'active' : ''}" data-category="${cat.key}">
-                <div class="category-btn-left">
-                    <span>${cat.icon}</span>
-                    <span>${cat.label}</span>
+        html += this.categories.map(cat => {
+            const iconSvg = SVG_ICONS[cat.icon] || SVG_ICONS['target'];
+            const isActive = this.selectedCategory === cat.name;
+
+            return `
+                <div class="category-item-row ${isActive ? 'active' : ''}">
+                    <button class="category-btn" onclick="tracker.setCategoryFilter('${cat.name}')">
+                        <div class="category-btn-left">
+                            <span class="cat-icon-svg" style="color: ${cat.color};">${iconSvg}</span>
+                            <span>${cat.name}</span>
+                        </div>
+                        <span class="category-pill-count">${counts[cat.name] || 0}</span>
+                    </button>
+                    <div class="category-item-actions">
+                        <button class="cat-action-btn" title="Edit" onclick="tracker.editCategoryById('${cat.id}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="cat-action-btn" title="Delete" onclick="tracker.deleteCategory('${cat.id}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
                 </div>
-                <span class="category-pill-count">${counts[cat.key] || 0}</span>
-            </button>
-        `).join('');
+            `;
+        }).join('');
 
-        container.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.selectedCategory = btn.dataset.category || 'all';
-                this.renderCategoryFilters();
-                this.renderHabitsGrid();
-            });
-        });
+        container.innerHTML = html;
+    }
+
+    setCategoryFilter(catName) {
+        this.selectedCategory = catName;
+        this.renderCategorySidebar();
+        this.renderHabitsGrid();
+    }
+
+    editCategoryById(id) {
+        const cat = this.categories.find(c => c.id === id);
+        if (cat) this.openCategoryModal(cat);
+    }
+
+    renderHabitCategorySelect() {
+        const select = document.getElementById('habitCategorySelect');
+        if (!select) return;
+
+        select.innerHTML = this.categories.map(cat => `
+            <option value="${cat.name}">${cat.name}</option>
+        `).join('');
     }
 
     renderMetrics() {
@@ -427,13 +759,13 @@ class OrbitHabitTracker {
         const completedToday = this.habits.filter(h => h.completions.includes(todayStr)).length;
         const progressPercent = total > 0 ? Math.round((completedToday / total) * 100) : 0;
 
-        // Today's Progress Card
+        // Progress Card
         const todayProgressText = document.getElementById('todayProgressText');
         const todayCompletedText = document.getElementById('todayCompletedText');
         if (todayProgressText) todayProgressText.textContent = `${progressPercent}%`;
-        if (todayCompletedText) todayCompletedText.textContent = `${completedToday} of ${total} habits`;
+        if (todayCompletedText) todayCompletedText.textContent = `${completedToday} of ${total} completed`;
 
-        // SVG Radial Ring calculation: stroke-dasharray is 163.36 (2 * PI * 26)
+        // SVG Radial Ring
         const progressRing = document.getElementById('progressRingFill');
         if (progressRing) {
             const circumference = 163.36;
@@ -455,9 +787,9 @@ class OrbitHabitTracker {
         const bestStreakValEl = document.getElementById('bestStreakValue');
         const bestStreakNameEl = document.getElementById('bestStreakName');
         if (bestStreakValEl) bestStreakValEl.textContent = bestStreak.toString();
-        if (bestStreakNameEl) bestStreakNameEl.textContent = bestStreak > 0 ? `Leading: ${bestStreakHabitName}` : 'Complete a habit to start!';
+        if (bestStreakNameEl) bestStreakNameEl.textContent = bestStreak > 0 ? `Leading: ${bestStreakHabitName}` : 'Check in to start a streak!';
 
-        // Total All-Time Completions
+        // Total All-Time Check-Ins
         const totalLogs = this.habits.reduce((acc, h) => acc + (h.completions ? h.completions.length : 0), 0);
         const totalLogsEl = document.getElementById('totalCompletionsValue');
         if (totalLogsEl) totalLogsEl.textContent = totalLogs.toString();
@@ -474,22 +806,10 @@ class OrbitHabitTracker {
         const todayStr = this.getTodayStr();
 
         return this.habits.filter(habit => {
-            // Category match
-            if (this.selectedCategory !== 'all' && habit.category !== this.selectedCategory) {
-                return false;
-            }
-            // Frequency match
-            if (this.selectedFrequency !== 'all' && habit.frequency !== this.selectedFrequency) {
-                return false;
-            }
-            // Status match
-            if (this.selectedStatus === 'pending' && habit.completions.includes(todayStr)) {
-                return false;
-            }
-            if (this.selectedStatus === 'completed' && !habit.completions.includes(todayStr)) {
-                return false;
-            }
-            // Search Query
+            if (this.selectedCategory !== 'all' && habit.category !== this.selectedCategory) return false;
+            if (this.selectedFrequency !== 'all' && habit.frequency !== this.selectedFrequency) return false;
+            if (this.selectedStatus === 'pending' && habit.completions.includes(todayStr)) return false;
+            if (this.selectedStatus === 'completed' && !habit.completions.includes(todayStr)) return false;
             if (this.searchQuery) {
                 const nameMatch = habit.name.toLowerCase().includes(this.searchQuery);
                 const descMatch = (habit.description || '').toLowerCase().includes(this.searchQuery);
@@ -497,21 +817,11 @@ class OrbitHabitTracker {
             }
             return true;
         }).sort((a, b) => {
-            if (this.sortOrder === 'streak') {
-                return this.calculateStreak(b) - this.calculateStreak(a);
-            }
-            if (this.sortOrder === 'name') {
-                return a.name.localeCompare(b.name);
-            }
-            if (this.sortOrder === 'category') {
-                return (a.category || '').localeCompare(b.category || '');
-            }
-            if (this.sortOrder === 'rate') {
-                return (b.completions?.length || 0) - (a.completions?.length || 0);
-            }
-            if (this.sortOrder === 'newest') {
-                return b.id - a.id;
-            }
+            if (this.sortOrder === 'streak') return this.calculateStreak(b) - this.calculateStreak(a);
+            if (this.sortOrder === 'name') return a.name.localeCompare(b.name);
+            if (this.sortOrder === 'category') return (a.category || '').localeCompare(b.category || '');
+            if (this.sortOrder === 'rate') return (b.completions?.length || 0) - (a.completions?.length || 0);
+            if (this.sortOrder === 'newest') return b.id - a.id;
             return 0;
         });
     }
@@ -524,13 +834,28 @@ class OrbitHabitTracker {
         const filtered = this.getFilteredHabits();
         if (countBadge) countBadge.textContent = filtered.length.toString();
 
+        // Clean & Welcoming Empty State
         if (filtered.length === 0) {
             grid.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">✨</div>
-                    <h3>No matching habits found</h3>
-                    <p>Try adjusting your search query, selecting another category, or add a fresh habit to track!</p>
-                    <button class="btn btn-primary" onclick="tracker.openHabitModal()">+ Create New Habit</button>
+                    <div class="empty-state-icon-box">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <h3>${this.habits.length === 0 ? 'Your habit board is clean and ready' : 'No habits match your filters'}</h3>
+                    <p>${this.habits.length === 0 ? 'Start tracking your daily goals, build momentum, and master consistency. Add your first habit or pick a starter idea.' : 'Try clearing your search or switching category filters to see your habits.'}</p>
+                    <div class="empty-state-actions">
+                        <button class="btn btn-primary" onclick="tracker.openHabitModal()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>Create First Habit</span>
+                        </button>
+                        ${this.habits.length === 0 ? `
+                        <button class="btn btn-secondary" onclick="tracker.loadSampleData()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span>Load Sample Habits</span>
+                        </button>` : ''}
+                    </div>
                 </div>
             `;
             return;
@@ -542,8 +867,9 @@ class OrbitHabitTracker {
         grid.innerHTML = filtered.map(habit => {
             const isCompletedToday = habit.completions.includes(todayStr);
             const streak = this.calculateStreak(habit);
-            const catInfo = CATEGORIES[habit.category] || { icon: '✨', color: '#4f46e5', bg: '#eef2ff' };
-            const cardAccent = habit.color || catInfo.color;
+            const catObj = this.categories.find(c => c.name === habit.category) || { name: habit.category, icon: 'target', color: '#4f46e5' };
+            const iconSvg = SVG_ICONS[catObj.icon] || SVG_ICONS['target'];
+            const cardAccent = habit.color || catObj.color;
 
             // Generate 7-day strip HTML
             const stripHtml = rollingDays.map(day => {
@@ -566,8 +892,8 @@ class OrbitHabitTracker {
                             <h3 class="habit-name">${habit.name}</h3>
                             ${habit.description ? `<p class="habit-desc">${habit.description}</p>` : ''}
                             <div class="habit-meta-row">
-                                <span class="category-tag" style="--tag-bg: ${catInfo.bg}; --tag-color: ${catInfo.color};">
-                                    ${catInfo.icon} ${habit.category}
+                                <span class="category-tag" style="--tag-bg: ${catObj.color}15; --tag-color: ${catObj.color};">
+                                    ${iconSvg} ${habit.category}
                                 </span>
                                 <span class="freq-tag">${habit.frequency}</span>
                             </div>
@@ -600,15 +926,19 @@ class OrbitHabitTracker {
                     <!-- Footer & Check In Button -->
                     <div class="habit-card-footer">
                         <div class="card-streak-info">
-                            <span class="flame-icon-box">🔥</span>
+                            <span class="flame-icon-box">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2c1.5 3 4 5.5 4 9a6 6 0 1 1-12 0c0-3.5 2.5-6 4-9 0 2 1.5 3.5 4 0z"/>
+                                </svg>
+                            </span>
                             <div class="streak-text-group">
-                                <span class="streak-count">${streak} ${streak === 1 ? 'day' : 'days'}</span>
-                                <span class="streak-sub">${habit.completions.length} total logs</span>
+                                <span class="streak-count">${streak} ${streak === 1 ? 'day' : 'days'} streak</span>
+                                <span class="streak-sub">${habit.completions.length} total check-ins</span>
                             </div>
                         </div>
 
                         <button class="check-in-btn ${isCompletedToday ? 'checked' : ''}" 
-                                onclick="tracker.toggleToday(${habit.id}, event)">
+                                onclick="tracker.toggleToday(${habit.id})">
                             ${isCompletedToday ? '✓ Done' : '+ Check In'}
                         </button>
                     </div>
@@ -618,14 +948,14 @@ class OrbitHabitTracker {
     }
 
     /* --------------------------------------------------------------------------
-       HABIT ACTIONS & INTERACTIONS
+       HABIT ACTIONS & CRUD
        -------------------------------------------------------------------------- */
-    toggleToday(habitId, event) {
+    toggleToday(habitId) {
         const todayStr = this.getTodayStr();
-        this.toggleDateCompletion(habitId, todayStr, event);
+        this.toggleDateCompletion(habitId, todayStr);
     }
 
-    toggleDateCompletion(habitId, dateStr, event) {
+    toggleDateCompletion(habitId, dateStr) {
         const habit = this.habits.find(h => h.id === habitId);
         if (!habit) return;
 
@@ -637,42 +967,12 @@ class OrbitHabitTracker {
             this.showToast(`Unchecked "${habit.name}" for ${dateStr}`);
         } else {
             habit.completions.push(dateStr);
-            this.showToast(`✓ Marked "${habit.name}" complete!`, 'success');
-            // Trigger confetti effect
+            this.showToast(`✓ Completed "${habit.name}"!`, 'success');
             this.triggerConfetti();
         }
 
         this.saveHabits();
         this.render();
-    }
-
-    handleTemplateAdd(templateKey) {
-        const templates = {
-            'water': { name: 'Hydration 2L', category: 'Health', desc: 'Drink at least 2 litres of fresh water', color: '#0284c7' },
-            'read': { name: 'Read 20 Pages', category: 'Learning', desc: 'Non-fiction books or engineering articles', color: '#4f46e5' },
-            'workout': { name: 'Morning Workout', category: 'Health', desc: 'Strength training or cardio session', color: '#059669' },
-            'meditate': { name: 'Mindful Meditation', category: 'Mindfulness', desc: '10 min mindful breathing & calm focus', color: '#7c3aed' }
-        };
-
-        const template = templates[templateKey];
-        if (!template) return;
-
-        const newHabit = {
-            id: Date.now(),
-            name: template.name,
-            description: template.desc,
-            category: template.category,
-            frequency: 'daily',
-            color: template.color,
-            createdAt: this.getTodayStr(),
-            completions: [this.getTodayStr()]
-        };
-
-        this.habits.unshift(newHabit);
-        this.saveHabits();
-        this.render();
-        this.showToast(`Added template: "${newHabit.name}"`, 'success');
-        this.triggerConfetti();
     }
 
     openHabitModal(habitToEdit = null) {
@@ -688,11 +988,10 @@ class OrbitHabitTracker {
             document.getElementById('editHabitId').value = habitToEdit.id;
             document.getElementById('habitName').value = habitToEdit.name;
             document.getElementById('habitDescription').value = habitToEdit.description || '';
-            document.getElementById('habitCategory').value = habitToEdit.category || 'Health';
+            document.getElementById('habitCategorySelect').value = habitToEdit.category;
             document.getElementById('habitFrequency').value = habitToEdit.frequency || 'daily';
             document.getElementById('habitColor').value = habitToEdit.color || '#4f46e5';
 
-            // Select color button
             document.querySelectorAll('#colorPickerGroup .color-option').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.color === habitToEdit.color);
             });
@@ -710,8 +1009,7 @@ class OrbitHabitTracker {
     }
 
     closeHabitModal() {
-        const modal = document.getElementById('habitModal');
-        if (modal) modal.classList.remove('show');
+        document.getElementById('habitModal')?.classList.remove('show');
     }
 
     handleHabitSubmit(e) {
@@ -720,14 +1018,13 @@ class OrbitHabitTracker {
         const editId = document.getElementById('editHabitId').value;
         const name = document.getElementById('habitName').value.trim();
         const description = document.getElementById('habitDescription').value.trim();
-        const category = document.getElementById('habitCategory').value;
+        const category = document.getElementById('habitCategorySelect').value;
         const frequency = document.getElementById('habitFrequency').value;
         const color = document.getElementById('habitColor').value;
 
         if (!name) return;
 
         if (editId) {
-            // Update
             const habit = this.habits.find(h => h.id === Number(editId));
             if (habit) {
                 habit.name = name;
@@ -738,7 +1035,6 @@ class OrbitHabitTracker {
                 this.showToast(`Updated habit "${name}"`, 'success');
             }
         } else {
-            // Create
             const newHabit = {
                 id: Date.now(),
                 name,
@@ -750,7 +1046,7 @@ class OrbitHabitTracker {
                 completions: []
             };
             this.habits.unshift(newHabit);
-            this.showToast(`Created new habit "${name}"!`, 'success');
+            this.showToast(`Created habit "${name}"!`, 'success');
             this.triggerConfetti();
         }
 
@@ -761,16 +1057,14 @@ class OrbitHabitTracker {
 
     editHabit(id) {
         const habit = this.habits.find(h => h.id === id);
-        if (habit) {
-            this.openHabitModal(habit);
-        }
+        if (habit) this.openHabitModal(habit);
     }
 
     deleteHabit(id) {
         const habit = this.habits.find(h => h.id === id);
         if (!habit) return;
 
-        if (confirm(`Are you sure you want to delete "${habit.name}"?`)) {
+        if (confirm(`Delete habit "${habit.name}"?`)) {
             this.habits = this.habits.filter(h => h.id !== id);
             this.saveHabits();
             this.render();
@@ -779,7 +1073,151 @@ class OrbitHabitTracker {
     }
 
     /* --------------------------------------------------------------------------
-       DETAILED ANALYTICS & HEATMAP MODAL
+       SAMPLE DEMO DATA & DATA BACKUP
+       -------------------------------------------------------------------------- */
+    loadSampleData() {
+        const today = new Date();
+        const getDateStr = (offset) => {
+            const d = new Date(today);
+            d.setDate(d.getDate() - offset);
+            return d.toISOString().split('T')[0];
+        };
+
+        this.categories = [...DEFAULT_CATEGORIES];
+        this.habits = [
+            {
+                id: 101,
+                name: "Morning 5km Jog",
+                description: "Zone 2 aerobic cardio before 8:00 AM",
+                category: "Health & Fitness",
+                frequency: "daily",
+                color: "#059669",
+                createdAt: getDateStr(30),
+                completions: [
+                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
+                    getDateStr(4), getDateStr(5), getDateStr(7), getDateStr(8),
+                    getDateStr(10), getDateStr(11), getDateStr(12), getDateStr(14)
+                ]
+            },
+            {
+                id: 102,
+                name: "Read 25 Pages",
+                description: "Software engineering & product design books",
+                category: "Learning",
+                frequency: "daily",
+                color: "#0284c7",
+                createdAt: getDateStr(25),
+                completions: [
+                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
+                    getDateStr(4), getDateStr(5), getDateStr(6), getDateStr(7),
+                    getDateStr(8), getDateStr(9), getDateStr(10), getDateStr(11)
+                ]
+            },
+            {
+                id: 103,
+                name: "Deep Work Sprint (90m)",
+                description: "Uninterrupted engineering flow state",
+                category: "Productivity",
+                frequency: "daily",
+                color: "#4f46e5",
+                createdAt: getDateStr(20),
+                completions: [
+                    getDateStr(0), getDateStr(1), getDateStr(2), getDateStr(3),
+                    getDateStr(5), getDateStr(6), getDateStr(7), getDateStr(9)
+                ]
+            },
+            {
+                id: 104,
+                name: "Mindful Meditation",
+                description: "10 minutes box breathing & mental reset",
+                category: "Mindfulness",
+                frequency: "daily",
+                color: "#7c3aed",
+                createdAt: getDateStr(18),
+                completions: [
+                    getDateStr(1), getDateStr(2), getDateStr(3), getDateStr(4),
+                    getDateStr(5), getDateStr(6), getDateStr(7)
+                ]
+            }
+        ];
+
+        this.saveCategories();
+        this.saveHabits();
+        this.render();
+        this.closeDataModal();
+        this.showToast('Loaded sample habit data!', 'success');
+        this.triggerConfetti();
+    }
+
+    clearAllHabits() {
+        if (confirm('Are you sure you want to clear all habits? This action cannot be undone.')) {
+            this.habits = [];
+            this.saveHabits();
+            this.render();
+            this.closeDataModal();
+            this.showToast('Cleared all habits.');
+        }
+    }
+
+    openDataModal() {
+        document.getElementById('dataModal')?.classList.add('show');
+    }
+
+    closeDataModal() {
+        document.getElementById('dataModal')?.classList.remove('show');
+    }
+
+    exportData() {
+        const payload = {
+            user: this.currentUser,
+            categories: this.categories,
+            habits: this.habits,
+            exportedAt: new Date().toISOString()
+        };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `habit-tracker-backup-${this.getTodayStr()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        this.showToast('Data exported successfully!', 'success');
+    }
+
+    importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (parsed.habits && Array.isArray(parsed.habits)) {
+                    this.habits = parsed.habits;
+                    if (parsed.categories && Array.isArray(parsed.categories)) {
+                        this.categories = parsed.categories;
+                    }
+                    this.saveCategories();
+                    this.saveHabits();
+                    this.render();
+                    this.closeDataModal();
+                    this.showToast('Backup restored successfully!', 'success');
+                } else if (Array.isArray(parsed)) {
+                    this.habits = parsed;
+                    this.saveHabits();
+                    this.render();
+                    this.closeDataModal();
+                    this.showToast('Habits imported!', 'success');
+                }
+            } catch (err) {
+                alert('Invalid JSON file format.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    /* --------------------------------------------------------------------------
+       DETAILED ANALYTICS MODAL
        -------------------------------------------------------------------------- */
     openAnalyticsModal() {
         const modal = document.getElementById('analyticsModal');
@@ -791,8 +1229,7 @@ class OrbitHabitTracker {
     }
 
     closeAnalyticsModal() {
-        const modal = document.getElementById('analyticsModal');
-        if (modal) modal.classList.remove('show');
+        document.getElementById('analyticsModal')?.classList.remove('show');
     }
 
     renderHeatmap() {
@@ -802,13 +1239,11 @@ class OrbitHabitTracker {
         const cells = [];
         const today = new Date();
 
-        // 30 Days back
         for (let i = 29; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
 
-            // Count how many habits were completed on this date
             const count = this.habits.filter(h => h.completions.includes(dateStr)).length;
             let level = 'level-0';
             if (count >= 3) level = 'level-3';
@@ -829,7 +1264,7 @@ class OrbitHabitTracker {
         if (!container) return;
 
         if (this.habits.length === 0) {
-            container.innerHTML = `<p style="color: var(--text-light); text-align: center; padding: 20px;">No habit data available</p>`;
+            container.innerHTML = `<p style="color: var(--text-light); text-align: center; padding: 20px;">No habit activity to display yet.</p>`;
             return;
         }
 
@@ -837,14 +1272,14 @@ class OrbitHabitTracker {
             const streak = this.calculateStreak(habit);
             const bestStreak = this.calculateBestStreak(habit);
             const completionRate = Math.min(100, Math.round((habit.completions.length / 30) * 100));
-            const catInfo = CATEGORIES[habit.category] || { color: '#4f46e5' };
-            const barColor = habit.color || catInfo.color;
+            const catObj = this.categories.find(c => c.name === habit.category) || { color: '#4f46e5' };
+            const barColor = habit.color || catObj.color;
 
             return `
                 <div class="breakdown-item">
                     <div class="breakdown-top">
                         <span class="breakdown-title">${habit.name}</span>
-                        <span class="breakdown-stats">Streak: ${streak}d | Best: ${bestStreak}d | ${habit.completions.length} logs</span>
+                        <span class="breakdown-stats">Streak: ${streak}d | Best: ${bestStreak}d | ${habit.completions.length} check-ins</span>
                     </div>
                     <div class="breakdown-bar-track">
                         <div class="breakdown-bar-fill" style="width: ${completionRate}%; background-color: ${barColor};"></div>
@@ -855,66 +1290,7 @@ class OrbitHabitTracker {
     }
 
     /* --------------------------------------------------------------------------
-       DATA BACKUP & RESTORE
-       -------------------------------------------------------------------------- */
-    openDataModal() {
-        const modal = document.getElementById('dataModal');
-        if (modal) modal.classList.add('show');
-    }
-
-    closeDataModal() {
-        const modal = document.getElementById('dataModal');
-        if (modal) modal.classList.remove('show');
-    }
-
-    exportData() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.habits, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `orbit-habits-backup-${this.getTodayStr()}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        this.showToast('Data exported successfully!', 'success');
-    }
-
-    importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const parsed = JSON.parse(e.target.result);
-                if (Array.isArray(parsed)) {
-                    this.habits = parsed;
-                    this.saveHabits();
-                    this.render();
-                    this.closeDataModal();
-                    this.showToast('Data imported successfully!', 'success');
-                } else {
-                    alert('Invalid file format. JSON array expected.');
-                }
-            } catch (err) {
-                alert('Failed to parse JSON backup file.');
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    resetDemoData() {
-        if (confirm('Reset your habit list with fresh sample data?')) {
-            this.habits = generateDemoHabits();
-            this.saveHabits();
-            this.render();
-            this.closeDataModal();
-            this.showToast('Reset to demo habits!', 'success');
-            this.triggerConfetti();
-        }
-    }
-
-    /* --------------------------------------------------------------------------
-       CONFETTI CANVAS ANIMATION
+       CONFETTI ENGINE
        -------------------------------------------------------------------------- */
     setupConfetti() {
         if (!this.canvas) return;
@@ -930,9 +1306,7 @@ class OrbitHabitTracker {
         if (!this.ctx || !this.canvas) return;
 
         const colors = ['#4f46e5', '#059669', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6'];
-        const numParticles = 60;
-
-        for (let i = 0; i < numParticles; i++) {
+        for (let i = 0; i < 60; i++) {
             this.confettiParticles.push({
                 x: window.innerWidth / 2 + (Math.random() - 0.5) * 200,
                 y: window.innerHeight * 0.4,
@@ -946,21 +1320,18 @@ class OrbitHabitTracker {
             });
         }
 
-        if (!this.animationId) {
-            this.animateConfetti();
-        }
+        if (!this.animationId) this.animateConfetti();
     }
 
     animateConfetti() {
         if (!this.ctx || !this.canvas) return;
-
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         for (let i = this.confettiParticles.length - 1; i >= 0; i--) {
             const p = this.confettiParticles[i];
             p.x += p.vx;
             p.y += p.vy;
-            p.vy += 0.35; // Gravity
+            p.vy += 0.35;
             p.rotation += p.rotSpeed;
             p.opacity -= 0.015;
 
@@ -1007,5 +1378,5 @@ class OrbitHabitTracker {
     }
 }
 
-// Instantiate global tracker
-const tracker = new OrbitHabitTracker();
+// Global Tracker Instance
+const tracker = new HabitTrackerApp();
