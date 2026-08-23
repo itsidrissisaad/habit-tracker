@@ -207,15 +207,4 @@ python3 -m http.server 8000
 
 ---
 
-## 🙌 Author
 
-Built with ❤️ by **[Idrissi Saad](https://github.com/itsidrissisaad)**
-
-> *"We are what we repeatedly do. Excellence, then, is not an act, but a habit."*
-> — Aristotle
-
----
-
-<div align="center">
-  <sub>⭐ Star this repo if it helped you build something great.</sub>
-</div>
