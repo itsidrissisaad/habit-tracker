@@ -1,7 +1,6 @@
 -- ============================================================
 --  HABIT TRACKER — Supabase PostgreSQL Migration Script
 --  Ready to paste directly into the Supabase SQL Editor
---  Author  : Idrissi Saad
 --  Version : 1.0.0
 -- ============================================================
 
