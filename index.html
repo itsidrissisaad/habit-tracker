@@ -22,6 +22,15 @@
         <!-- Top Navigation Bar -->
         <header class="app-header">
             <div class="header-left">
+                <!-- Mobile Hamburger Menu -->
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
                 <!-- Bespoke Habit Tracker Brand Logo -->
                 <div class="brand-logo" id="brandLogoBtn" title="Habit Tracker Dashboard">
                     <div class="brand-icon">
@@ -127,8 +136,11 @@
 
         <!-- Main Dashboard Wrapper -->
         <div class="dashboard-wrapper">
+            <!-- Mobile overlay backdrop -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
             <!-- Left Navigation / Filter Sidebar -->
-            <aside class="sidebar-nav">
+            <aside class="sidebar-nav" id="sidebarNav">
                 <!-- Categories Management Section -->
                 <div class="sidebar-section">
                     <div class="sidebar-heading-row">
@@ -325,12 +337,17 @@
             <form id="loginForm" class="modal-form auth-form">
                 <div class="form-group">
                     <label for="loginEmail">Email / Username <span class="required">*</span></label>
-                    <input type="text" id="loginEmail" placeholder="e.g. alex@example.com" required>
+                    <input type="email" id="loginEmail" autocomplete="email" placeholder="e.g. alex@example.com" required>
                 </div>
 
                 <div class="form-group">
                     <label for="loginPassword">Password <span class="required">*</span></label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••" required minlength="8">
+                        <button type="button" class="toggle-password-btn" id="toggleLoginPasswordBtn" title="Show password">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-full">Sign In to Account</button>
@@ -355,8 +372,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="signUpPassword">Password <span class="required">*</span></label>
-                    <input type="password" id="signUpPassword" placeholder="Create a password" required minlength="4">
+                    <div class="password-label-row">
+                        <label for="signUpPassword">Password <span class="required">*</span></label>
+                        <button type="button" class="btn-link-action" id="generatePasswordBtn">Generate Strong Password</button>
+                    </div>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="signUpPassword" autocomplete="new-password" placeholder="At least 8 characters" required>
+                        <button type="button" class="toggle-password-btn" id="toggleSignUpPasswordBtn" title="Show password">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                    <div class="password-strength-hint" id="passwordStrengthHint" style="display: none;"></div>
                 </div>
 
                 <div class="form-group">
@@ -570,6 +596,6 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Script loading -->
-    <script type="module" src="script.js"></script>
+    <script type="module" src="/script.ts"></script>
 </body>
 </html>

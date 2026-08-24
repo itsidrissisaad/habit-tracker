@@ -1,12 +1,20 @@
 /**
- * Habit Tracker - TypeScript Architecture & Engine
+ * Habit Tracker - Core Application Engine & Cloud Sync
+ * Enterprise TypeScript Architecture with Supabase Backend & Local Fallback
  */
+import type { User } from '@supabase/supabase-js';
+import { supabase, isSupabaseConfigured } from './supabaseClient.ts';
+
+const LOCAL_USER_KEY = 'habit_tracker_user';
+const LOCAL_HABITS_KEY = 'habit_tracker_habits';
+const LOCAL_CATEGORIES_KEY = 'habit_tracker_categories';
 
 export type HabitFrequency = 'daily' | 'weekly' | 'monthly';
 export type SortOrder = 'streak' | 'name' | 'category' | 'rate' | 'newest';
 export type DialogType = 'danger' | 'warning' | 'info';
 
 export interface UserProfile {
+    id?: string;
     name: string;
     email: string;
     avatarColor: string;
@@ -21,14 +29,24 @@ export interface CustomCategory {
 }
 
 export interface Habit {
-    id: number;
+    id: string;
     name: string;
     description?: string;
     category: string;
+    categoryId?: string | null;
     frequency: HabitFrequency;
     color: string;
     createdAt: string;
-    completions: string[]; // ISO date strings 'YYYY-MM-DD'
+    completions: string[];
+}
+
+function createId(): string {
+    return crypto.randomUUID ? crypto.randomUUID() : `id_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function normalizeHexColor(color: string | undefined, fallback = '#4F46E5'): string {
+    const match = String(color || '').trim().match(/^#([0-9A-Fa-f]{6})$/);
+    return match ? `#${match[1].toUpperCase()}` : fallback;
 }
 
 export interface DayPillData {
@@ -100,6 +118,7 @@ export class HabitTrackerApp {
     private habits: Habit[] = [];
     private categories: CustomCategory[] = [];
     private currentUser: UserProfile | null = null;
+    private authUser: User | null = null;
     private selectedCategory: string = 'all';
     private selectedFrequency: string = 'all';
     private selectedStatus: string = 'all';
@@ -117,10 +136,35 @@ export class HabitTrackerApp {
         this.init();
     }
 
-    private init(): void {
-        this.loadUser();
-        this.loadCategories();
-        this.loadHabits();
+    public usesCloud(): boolean {
+        return Boolean(isSupabaseConfigured && this.authUser && !this.authUser.is_anonymous);
+    }
+
+    private async init(): Promise<void> {
+        if (isSupabaseConfigured) {
+            supabase.auth.onAuthStateChange(async (_event, session) => {
+                const prevUser = this.authUser;
+                this.authUser = session?.user ?? null;
+                if ((prevUser?.id || '') !== (this.authUser?.id || '')) {
+                    await this.hydrateUser();
+                    await this.loadCategories();
+                    await this.loadHabits();
+                    this.render();
+                }
+            });
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                this.authUser = session?.user ?? null;
+            } catch (err) {
+                console.warn('[Habit Tracker] Failed to retrieve Supabase session:', err);
+                this.authUser = null;
+            }
+        }
+
+        await this.hydrateUser();
+        await this.loadCategories();
+        await this.loadHabits();
         this.setupIconPicker();
         this.setupStarterInspirations();
         this.setupEventListeners();
@@ -129,23 +173,81 @@ export class HabitTrackerApp {
         this.render();
     }
 
-    private loadUser(): void {
-        const raw = localStorage.getItem('habit_tracker_user');
+    private guestProfile(): UserProfile {
+        return {
+            name: 'Guest User',
+            email: 'guest@habittracker.app',
+            avatarColor: '#4F46E5',
+            isGuest: true
+        };
+    }
+
+    private async hydrateUser(): Promise<void> {
+        if (this.authUser) {
+            await this.applyAuthUser(this.authUser);
+            return;
+        }
+
+        const raw = localStorage.getItem(LOCAL_USER_KEY);
         if (raw) {
             try {
-                this.currentUser = JSON.parse(raw);
-            } catch (e) {
-                this.currentUser = { name: 'Alex Rivera', email: 'alex@example.com', avatarColor: '#4f46e5', isGuest: false };
+                this.currentUser = JSON.parse(raw) as UserProfile;
+                this.currentUser.isGuest = true;
+                this.currentUser.id = undefined;
+            } catch {
+                this.currentUser = this.guestProfile();
             }
         } else {
-            this.currentUser = { name: 'Guest User', email: 'guest@habittracker.app', avatarColor: '#4f46e5', isGuest: true };
+            this.currentUser = this.guestProfile();
             this.saveUser();
         }
         this.updateUserUI();
     }
 
+    private async applyAuthUser(user: User): Promise<void> {
+        const metadata = user.user_metadata || {};
+        let name = typeof metadata.name === 'string' ? metadata.name : '';
+        let avatarColor = normalizeHexColor(metadata.avatar_color as string | undefined);
+        let email = user.email || '';
+
+        try {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('name, email, avatar_color, is_guest')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (!error && profile) {
+                name = profile.name || name;
+                email = profile.email || email;
+                avatarColor = normalizeHexColor(profile.avatar_color, avatarColor);
+            } else if (!profile) {
+                // Upsert profile row if trigger didn't catch it
+                await supabase.from('profiles').upsert({
+                    id: user.id,
+                    name: name || email.split('@')[0] || 'User',
+                    email,
+                    avatar_color: avatarColor,
+                    is_guest: false
+                });
+            }
+        } catch (err) {
+            console.warn('[Habit Tracker] Error fetching profile:', err);
+        }
+
+        this.currentUser = {
+            id: user.id,
+            name: name || email.split('@')[0] || 'User',
+            email,
+            avatarColor,
+            isGuest: false
+        };
+        this.saveUser();
+        this.updateUserUI();
+    }
+
     private saveUser(): void {
-        localStorage.setItem('habit_tracker_user', JSON.stringify(this.currentUser));
+        localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(this.currentUser));
     }
 
     private updateUserUI(): void {
@@ -165,7 +267,9 @@ export class HabitTrackerApp {
         }
         if (dropdownName) dropdownName.textContent = this.currentUser.name;
         if (dropdownEmail) dropdownEmail.textContent = this.currentUser.email;
-        if (authText) authText.textContent = this.currentUser.isGuest ? 'Sign In / Sign Up' : 'Switch Account / Log Out';
+        if (authText) {
+            authText.textContent = this.currentUser.isGuest ? 'Sign In / Sign Up' : 'Log Out / Switch Account';
+        }
     }
 
     private updateUserGreeting(): void {
@@ -186,35 +290,139 @@ export class HabitTrackerApp {
         }
     }
 
-    private loadCategories(): void {
+    private loadLocalCategories(): void {
         try {
-            const raw = localStorage.getItem('habit_tracker_categories');
-            if (raw) {
-                this.categories = JSON.parse(raw);
-            } else {
-                this.categories = [...DEFAULT_CATEGORIES];
-                this.saveCategories();
-            }
-        } catch (e) {
+            const raw = localStorage.getItem(LOCAL_CATEGORIES_KEY);
+            this.categories = raw ? JSON.parse(raw) : [...DEFAULT_CATEGORIES];
+            if (!raw) this.persistLocalCategories();
+        } catch {
             this.categories = [...DEFAULT_CATEGORIES];
         }
     }
 
-    private saveCategories(): void {
-        localStorage.setItem('habit_tracker_categories', JSON.stringify(this.categories));
+    private persistLocalCategories(): void {
+        localStorage.setItem(LOCAL_CATEGORIES_KEY, JSON.stringify(this.categories));
     }
 
-    private loadHabits(): void {
+    private persistLocalHabits(): void {
+        localStorage.setItem(LOCAL_HABITS_KEY, JSON.stringify(this.habits));
+    }
+
+    private async loadCategories(): Promise<void> {
+        if (!this.usesCloud()) {
+            this.loadLocalCategories();
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from('categories')
+            .select('id, name, icon_key, color')
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('[Habit Tracker] Error loading categories from Supabase:', error);
+            this.loadLocalCategories();
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            await this.seedDefaultCategories();
+            return;
+        }
+
+        this.categories = data.map((row) => ({
+            id: row.id,
+            name: row.name,
+            icon: row.icon_key,
+            color: normalizeHexColor(row.color)
+        }));
+    }
+
+    private async seedDefaultCategories(): Promise<void> {
+        if (!this.authUser) return;
+        const rows = DEFAULT_CATEGORIES.map((cat) => ({
+            user_id: this.authUser!.id,
+            name: cat.name,
+            icon_key: cat.icon,
+            color: normalizeHexColor(cat.color)
+        }));
+        const { data, error } = await supabase.from('categories').insert(rows).select('id, name, icon_key, color');
+        if (error || !data) {
+            this.categories = [...DEFAULT_CATEGORIES];
+            return;
+        }
+        this.categories = data.map((row) => ({
+            id: row.id,
+            name: row.name,
+            icon: row.icon_key,
+            color: normalizeHexColor(row.color)
+        }));
+    }
+
+    private loadLocalHabits(): void {
         try {
-            const raw = localStorage.getItem('habit_tracker_habits');
+            const raw = localStorage.getItem(LOCAL_HABITS_KEY);
             this.habits = raw ? JSON.parse(raw) : [];
-        } catch (e) {
+        } catch {
             this.habits = [];
         }
     }
 
-    private saveHabits(): void {
-        localStorage.setItem('habit_tracker_habits', JSON.stringify(this.habits));
+    private async loadHabits(): Promise<void> {
+        if (!this.usesCloud()) {
+            this.loadLocalHabits();
+            return;
+        }
+
+        const { data, error } = await supabase
+            .from('habits')
+            .select(`
+                id,
+                name,
+                description,
+                frequency,
+                color,
+                created_at,
+                category_id,
+                categories ( id, name ),
+                habit_completions ( completed_on )
+            `)
+            .eq('is_archived', false)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('[Habit Tracker] Error loading habits from Supabase:', error);
+            this.habits = [];
+            return;
+        }
+
+        type HabitRow = {
+            id: string;
+            name: string;
+            description: string | null;
+            frequency: HabitFrequency;
+            color: string;
+            created_at: string;
+            category_id: string | null;
+            categories: { id: string; name: string } | { id: string; name: string }[] | null;
+            habit_completions: { completed_on: string }[] | null;
+        };
+
+        this.habits = ((data || []) as HabitRow[]).map((row) => {
+            const categoryRel = Array.isArray(row.categories) ? row.categories[0] : row.categories;
+            const categoryName = categoryRel?.name || this.categories.find(c => c.id === row.category_id)?.name || 'General';
+            return {
+                id: row.id,
+                name: row.name,
+                description: row.description || '',
+                category: categoryName,
+                categoryId: row.category_id,
+                frequency: row.frequency,
+                color: normalizeHexColor(row.color),
+                createdAt: (row.created_at || '').slice(0, 10) || this.getTodayStr(),
+                completions: (row.habit_completions || []).map((c) => c.completed_on)
+            };
+        });
     }
 
     public showConfirmDialog(options: ConfirmDialogOptions = {}): Promise<boolean> {
@@ -344,6 +552,47 @@ export class HabitTrackerApp {
         return safeText.replace(regex, '<mark class="search-highlight">$1</mark>');
     }
 
+    private generateStrongPassword(): string {
+        const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        const numbers = '0123456789';
+        const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+        
+        let password = '';
+        password += uppercase[Math.floor(Math.random() * uppercase.length)];
+        password += lowercase[Math.floor(Math.random() * lowercase.length)];
+        password += numbers[Math.floor(Math.random() * numbers.length)];
+        password += symbols[Math.floor(Math.random() * symbols.length)];
+        
+        const allChars = uppercase + lowercase + numbers + symbols;
+        const length = 14;
+        for (let i = password.length; i < length; i++) {
+            password += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+        
+        return password.split('').sort(() => 0.5 - Math.random()).join('');
+    }
+
+    private validatePasswordStrength(password: string): { isValid: boolean; message: string } {
+        if (password.length < 8) {
+            return { isValid: false, message: 'Password must be at least 8 characters long.' };
+        }
+        if (!/[A-Z]/.test(password)) {
+            return { isValid: false, message: 'Password must contain at least one uppercase letter.' };
+        }
+        if (!/[a-z]/.test(password)) {
+            return { isValid: false, message: 'Password must contain at least one lowercase letter.' };
+        }
+        if (!/[0-9]/.test(password)) {
+            return { isValid: false, message: 'Password must contain at least one number.' };
+        }
+        if (!/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
+            return { isValid: false, message: 'Password must contain at least one special character.' };
+        }
+        return { isValid: true, message: 'Strong password' };
+    }
+
+
     public clearSearch(): void {
         const searchInput = document.getElementById('searchInput') as HTMLInputElement | null;
         const clearSearchBtn = document.getElementById('clearSearchBtn') as HTMLElement | null;
@@ -369,7 +618,13 @@ export class HabitTrackerApp {
             document.addEventListener('click', () => userMenu.classList.remove('show'));
         }
 
-        document.getElementById('dropdownAuthBtn')?.addEventListener('click', () => this.openAuthModal());
+        document.getElementById('dropdownAuthBtn')?.addEventListener('click', () => {
+            if (this.currentUser && !this.currentUser.isGuest) {
+                this.handleLogout();
+            } else {
+                this.openAuthModal();
+            }
+        });
         document.getElementById('closeAuthModalBtn')?.addEventListener('click', () => this.closeAuthModal());
         document.getElementById('dropdownClearAllBtn')?.addEventListener('click', () => this.clearAllHabits());
 
@@ -406,6 +661,91 @@ export class HabitTrackerApp {
                 const avatarColorInput = document.getElementById('signUpAvatarColor') as HTMLInputElement | null;
                 if (avatarColorInput) avatarColorInput.value = btn.dataset.color || '#4f46e5';
             });
+        }
+
+        // Password visibility toggles, generation, and validation setup
+        const setupPasswordToggle = (inputEl: HTMLInputElement | null, btnEl: HTMLElement | null) => {
+            if (!inputEl || !btnEl) return;
+            btnEl.addEventListener('click', () => {
+                const type = inputEl.type === 'password' ? 'text' : 'password';
+                inputEl.type = type;
+                btnEl.title = type === 'password' ? 'Show password' : 'Hide password';
+                if (type === 'text') {
+                    btnEl.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+                } else {
+                    btnEl.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                }
+            });
+        };
+
+        const loginPassInput = document.getElementById('loginPassword') as HTMLInputElement | null;
+        const toggleLoginPassBtn = document.getElementById('toggleLoginPasswordBtn');
+        setupPasswordToggle(loginPassInput, toggleLoginPassBtn);
+
+        const signUpPassInput = document.getElementById('signUpPassword') as HTMLInputElement | null;
+        const toggleSignUpPassBtn = document.getElementById('toggleSignUpPasswordBtn');
+        setupPasswordToggle(signUpPassInput, toggleSignUpPassBtn);
+
+        const generateBtn = document.getElementById('generatePasswordBtn');
+        if (generateBtn && signUpPassInput) {
+            generateBtn.addEventListener('click', () => {
+                const newPass = this.generateStrongPassword();
+                signUpPassInput.value = newPass;
+                signUpPassInput.type = 'text';
+                if (toggleSignUpPassBtn) {
+                    toggleSignUpPassBtn.title = 'Hide password';
+                    toggleSignUpPassBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+                }
+                
+                const hint = document.getElementById('passwordStrengthHint');
+                if (hint) {
+                    hint.textContent = 'Strong password generated!';
+                    hint.className = 'password-strength-hint success';
+                    hint.style.display = 'block';
+                }
+                
+                this.showToast('Strong password generated and filled!', 'success');
+            });
+        }
+
+        if (signUpPassInput) {
+            const handlePassInput = () => {
+                const val = signUpPassInput.value;
+                const hint = document.getElementById('passwordStrengthHint');
+                if (!hint) return;
+                
+                if (!val) {
+                    hint.style.display = 'none';
+                    return;
+                }
+                
+                const strength = this.validatePasswordStrength(val);
+                hint.textContent = strength.message;
+                if (strength.isValid) {
+                    hint.className = 'password-strength-hint success';
+                } else {
+                    hint.className = 'password-strength-hint error';
+                }
+                hint.style.display = 'block';
+            };
+            
+            signUpPassInput.addEventListener('input', handlePassInput);
+        }
+
+
+        // Mobile Menu Drawer Handling
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if (mobileMenuBtn && sidebarNav && sidebarOverlay) {
+            const toggleSidebar = () => {
+                sidebarNav.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+            };
+            
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
         }
 
         // Live Search Handling
@@ -465,6 +805,7 @@ export class HabitTrackerApp {
                 btn.classList.add('active');
                 this.selectedFrequency = btn.dataset.freq || 'all';
                 this.renderHabitsGrid();
+                this.closeMobileMenu();
             });
         }
 
@@ -541,57 +882,206 @@ export class HabitTrackerApp {
         document.getElementById('authModal')?.classList.remove('show');
     }
 
-    private handleLogin(e: Event): void {
+    private async handleLogin(e: Event): Promise<void> {
         e.preventDefault();
-        const email = (document.getElementById('loginEmail') as HTMLInputElement).value.trim();
-        const name = email.split('@')[0].replace('.', ' ') || 'User';
-        const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+        const emailInput = document.getElementById('loginEmail') as HTMLInputElement | null;
+        const passwordInput = document.getElementById('loginPassword') as HTMLInputElement | null;
+        const submitBtn = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement | null;
 
-        this.currentUser = {
-            name: formattedName,
-            email: email,
-            avatarColor: '#4f46e5',
-            isGuest: false
-        };
-        this.saveUser();
-        this.updateUserUI();
-        this.updateUserGreeting();
-        this.closeAuthModal();
-        this.showToast(`Signed in as ${this.currentUser.name}`, 'success');
+        const email = emailInput?.value.trim() || '';
+        const password = passwordInput?.value || '';
+
+        if (!email || !password) return;
+
+        if (isSupabaseConfigured) {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Signing In...';
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) {
+                    this.showToast(error.message, 'error');
+                    return;
+                }
+
+                if (data.user) {
+                    this.authUser = data.user;
+                    await this.hydrateUser();
+                    await this.loadCategories();
+                    await this.loadHabits();
+                    this.render();
+                    this.closeAuthModal();
+                    this.showToast(`Signed in successfully as ${this.currentUser?.name || email}`, 'success');
+                }
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Login failed';
+                this.showToast(message, 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Sign In to Account';
+                }
+            }
+        } else {
+            // Local mode fallback
+            const name = email.split('@')[0].replace('.', ' ') || 'User';
+            const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+
+            this.currentUser = {
+                name: formattedName,
+                email: email,
+                avatarColor: '#4f46e5',
+                isGuest: false
+            };
+            this.saveUser();
+            this.updateUserUI();
+            this.updateUserGreeting();
+            this.closeAuthModal();
+            this.showToast(`Signed in locally as ${this.currentUser.name}`, 'success');
+        }
     }
 
-    private handleSignUp(e: Event): void {
+    private async handleSignUp(e: Event): Promise<void> {
         e.preventDefault();
-        const name = (document.getElementById('signUpName') as HTMLInputElement).value.trim();
-        const email = (document.getElementById('signUpEmail') as HTMLInputElement).value.trim();
-        const color = (document.getElementById('signUpAvatarColor') as HTMLInputElement).value;
+        const nameInput = document.getElementById('signUpName') as HTMLInputElement | null;
+        const emailInput = document.getElementById('signUpEmail') as HTMLInputElement | null;
+        const passwordInput = document.getElementById('signUpPassword') as HTMLInputElement | null;
+        const colorInput = document.getElementById('signUpAvatarColor') as HTMLInputElement | null;
+        const submitBtn = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement | null;
 
-        this.currentUser = {
-            name: name,
-            email: email,
-            avatarColor: color,
-            isGuest: false
-        };
+        const name = nameInput?.value.trim() || '';
+        const email = emailInput?.value.trim() || '';
+        const password = passwordInput?.value || '';
+        const color = colorInput?.value || '#4f46e5';
+
+        if (!name || !email || !password) return;
+
+        const passwordStrength = this.validatePasswordStrength(password);
+        if (!passwordStrength.isValid) {
+            this.showToast(passwordStrength.message, 'error');
+            const hint = document.getElementById('passwordStrengthHint');
+            if (hint) {
+                hint.textContent = passwordStrength.message;
+                hint.className = 'password-strength-hint error';
+                hint.style.display = 'block';
+            }
+            passwordInput?.focus();
+            return;
+        }
+
+        if (isSupabaseConfigured) {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating Account...';
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            name,
+                            avatar_color: color,
+                            is_guest: false
+                        }
+                    }
+                });
+
+                if (error) {
+                    this.showToast(error.message, 'error');
+                    return;
+                }
+
+                if (data.session && data.user) {
+                    this.authUser = data.user;
+                    await this.hydrateUser();
+                    await this.loadCategories();
+                    await this.loadHabits();
+                    this.render();
+                    this.closeAuthModal();
+                    this.showToast(`Welcome, ${name}!`, 'success');
+                    this.triggerConfetti();
+                } else if (data.user) {
+                    this.closeAuthModal();
+                    await this.showAlertDialog({
+                        title: 'Account Created',
+                        message: 'Your account has been created! A verification email has been sent via Resend. Please check your inbox (and spam folder) to confirm your email, then sign in.',
+                        type: 'info'
+                    });
+                }
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Sign up failed';
+                this.showToast(message, 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Account';
+                }
+            }
+        } else {
+            // Local mode fallback
+            this.currentUser = {
+                name: name,
+                email: email,
+                avatarColor: color,
+                isGuest: false
+            };
+            this.saveUser();
+            this.updateUserUI();
+            this.updateUserGreeting();
+            this.closeAuthModal();
+            this.showToast(`Welcome, ${this.currentUser.name}!`, 'success');
+            this.triggerConfetti();
+        }
+    }
+
+    public async handleLogout(): Promise<void> {
+        const confirmed = await this.showConfirmDialog({
+            title: 'Sign Out?',
+            message: 'Are you sure you want to sign out? Your cloud data will remain safely stored on Supabase.',
+            confirmText: 'Sign Out',
+            confirmClass: 'btn-danger',
+            type: 'info'
+        });
+
+        if (!confirmed) return;
+
+        if (isSupabaseConfigured) {
+            try {
+                await supabase.auth.signOut();
+            } catch (err) {
+                console.error('[Habit Tracker] Sign out error:', err);
+            }
+        }
+
+        this.authUser = null;
+        this.currentUser = this.guestProfile();
         this.saveUser();
+        this.loadLocalCategories();
+        this.loadLocalHabits();
         this.updateUserUI();
         this.updateUserGreeting();
-        this.closeAuthModal();
-        this.showToast(`Welcome, ${this.currentUser.name}!`, 'success');
-        this.triggerConfetti();
+        this.render();
+        this.showToast('Signed out. Continuing as Guest.');
     }
 
     private handleGuestLogin(): void {
-        this.currentUser = {
-            name: 'Guest Explorer',
-            email: 'guest@habittracker.app',
-            avatarColor: '#059669',
-            isGuest: true
-        };
+        this.currentUser = this.guestProfile();
         this.saveUser();
+        this.loadLocalCategories();
+        this.loadLocalHabits();
         this.updateUserUI();
         this.updateUserGreeting();
         this.closeAuthModal();
-        this.showToast('Continuing as Guest', 'success');
+        this.render();
+        this.showToast('Continuing as Guest Explorer', 'success');
     }
 
     private setupIconPicker(): void {
@@ -654,7 +1144,7 @@ export class HabitTrackerApp {
         document.getElementById('categoryModal')?.classList.remove('show');
     }
 
-    private handleCategorySubmit(e: Event): void {
+    private async handleCategorySubmit(e: Event): Promise<void> {
         e.preventDefault();
         const editId = (document.getElementById('editCategoryId') as HTMLInputElement).value;
         const name = (document.getElementById('categoryNameInput') as HTMLInputElement).value.trim();
@@ -663,31 +1153,82 @@ export class HabitTrackerApp {
 
         if (!name) return;
 
-        if (editId) {
-            const cat = this.categories.find(c => c.id === editId);
-            if (cat) {
-                const oldName = cat.name;
-                cat.name = name;
-                cat.icon = iconKey;
-                cat.color = color;
-                this.habits.forEach(h => {
-                    if (h.category === oldName) h.category = name;
-                });
-                this.saveHabits();
+        if (this.usesCloud()) {
+            if (editId) {
+                const { error } = await supabase
+                    .from('categories')
+                    .update({ name, icon_key: iconKey, color: normalizeHexColor(color) })
+                    .eq('id', editId);
+
+                if (error) {
+                    this.showToast(error.message, 'error');
+                    return;
+                }
+
+                const cat = this.categories.find(c => c.id === editId);
+                if (cat) {
+                    const oldName = cat.name;
+                    cat.name = name;
+                    cat.icon = iconKey;
+                    cat.color = color;
+                    this.habits.forEach(h => {
+                        if (h.category === oldName) h.category = name;
+                    });
+                }
                 this.showToast(`Updated category "${name}"`, 'success');
+            } else {
+                const { data, error } = await supabase
+                    .from('categories')
+                    .insert({
+                        user_id: this.authUser!.id,
+                        name,
+                        icon_key: iconKey,
+                        color: normalizeHexColor(color)
+                    })
+                    .select('id')
+                    .single();
+
+                if (error || !data) {
+                    this.showToast(error?.message || 'Could not create category', 'error');
+                    return;
+                }
+
+                this.categories.push({
+                    id: data.id,
+                    name,
+                    icon: iconKey,
+                    color
+                });
+                this.showToast(`Created category "${name}"!`, 'success');
             }
         } else {
-            const newCat: CustomCategory = {
-                id: 'cat_' + Date.now(),
-                name,
-                icon: iconKey,
-                color
-            };
-            this.categories.push(newCat);
-            this.showToast(`Created category "${name}"!`, 'success');
+            // Local mode
+            if (editId) {
+                const cat = this.categories.find(c => c.id === editId);
+                if (cat) {
+                    const oldName = cat.name;
+                    cat.name = name;
+                    cat.icon = iconKey;
+                    cat.color = color;
+                    this.habits.forEach(h => {
+                        if (h.category === oldName) h.category = name;
+                    });
+                    this.persistLocalHabits();
+                    this.showToast(`Updated category "${name}"`, 'success');
+                }
+            } else {
+                const newCat: CustomCategory = {
+                    id: createId(),
+                    name,
+                    icon: iconKey,
+                    color
+                };
+                this.categories.push(newCat);
+                this.showToast(`Created category "${name}"!`, 'success');
+            }
+            this.persistLocalCategories();
         }
 
-        this.saveCategories();
         this.closeCategoryModal();
         this.render();
     }
@@ -704,16 +1245,31 @@ export class HabitTrackerApp {
             type: 'danger'
         });
 
-        if (confirmed) {
-            this.categories = this.categories.filter(c => c.id !== id);
-            this.habits.forEach(h => {
-                if (h.category === cat.name) h.category = 'General';
-            });
-            this.saveCategories();
-            this.saveHabits();
-            this.render();
-            this.showToast(`Deleted category "${cat.name}"`);
+        if (!confirmed) return;
+
+        if (this.usesCloud()) {
+            const { error } = await supabase.from('categories').delete().eq('id', id);
+            if (error) {
+                this.showToast(error.message, 'error');
+                return;
+            }
         }
+
+        this.categories = this.categories.filter(c => c.id !== id);
+        this.habits.forEach(h => {
+            if (h.categoryId === id || h.category === cat.name) {
+                h.category = 'General';
+                h.categoryId = null;
+            }
+        });
+
+        if (!this.usesCloud()) {
+            this.persistLocalCategories();
+            this.persistLocalHabits();
+        }
+
+        this.render();
+        this.showToast(`Deleted category "${cat.name}"`);
     }
 
     private setupStarterInspirations(): void {
@@ -726,14 +1282,14 @@ export class HabitTrackerApp {
             { name: 'Morning Workout', category: 'Health & Fitness', desc: 'Zone 2 cardio or strength session', icon: 'dumbbell', color: '#059669', freq: 'daily' as HabitFrequency },
             { name: 'Mindful Breathing', category: 'Mindfulness', desc: '10 min mindfulness or meditation', icon: 'feather', color: '#7c3aed', freq: 'daily' as HabitFrequency }
         ].map(item => `
-            <button type="button" class="template-card" onclick="tracker.addStarterInspiration('${item.name}')">
+            <button type="button" class="template-card" onclick="tracker.addStarterInspiration('${this.escapeHtml(item.name)}')">
                 <div class="template-card-left">
                     <div class="template-icon-badge" style="color: ${item.color};">
                         ${SVG_ICONS[item.icon] || SVG_ICONS['target']}
                     </div>
                     <div class="template-info">
-                        <span class="template-title">${item.name}</span>
-                        <span class="template-sub">${item.category} • ${item.freq}</span>
+                        <span class="template-title">${this.escapeHtml(item.name)}</span>
+                        <span class="template-sub">${this.escapeHtml(item.category)} • ${item.freq}</span>
                     </div>
                 </div>
                 <span class="template-add-pill">+ Add</span>
@@ -741,7 +1297,7 @@ export class HabitTrackerApp {
         `).join('');
     }
 
-    public addStarterInspiration(name: string): void {
+    public async addStarterInspiration(name: string): Promise<void> {
         const templates: Record<string, { category: string; desc: string; icon: string; color: string; freq: HabitFrequency }> = {
             'Hydration 2L': { category: 'Health & Fitness', desc: 'Drink 2+ litres of fresh water daily', icon: 'droplet', color: '#0284c7', freq: 'daily' },
             'Read 20 Mins': { category: 'Learning', desc: 'Read tech articles or books', icon: 'book', color: '#4f46e5', freq: 'daily' },
@@ -752,31 +1308,89 @@ export class HabitTrackerApp {
         const template = templates[name];
         if (!template) return;
 
-        if (!this.categories.some(c => c.name === template.category)) {
-            this.categories.push({
-                id: 'cat_' + Date.now(),
-                name: template.category,
-                icon: template.icon,
-                color: template.color
-            });
-            this.saveCategories();
+        let categoryId: string | null = null;
+        let matchedCat = this.categories.find(c => c.name.toLowerCase() === template.category.toLowerCase());
+
+        if (!matchedCat) {
+            if (this.usesCloud()) {
+                const { data: catData } = await supabase.from('categories').insert({
+                    user_id: this.authUser!.id,
+                    name: template.category,
+                    icon_key: template.icon,
+                    color: normalizeHexColor(template.color)
+                }).select('id').single();
+
+                if (catData) {
+                    matchedCat = { id: catData.id, name: template.category, icon: template.icon, color: template.color };
+                    this.categories.push(matchedCat);
+                    categoryId = catData.id;
+                }
+            } else {
+                matchedCat = { id: createId(), name: template.category, icon: template.icon, color: template.color };
+                this.categories.push(matchedCat);
+                categoryId = matchedCat.id;
+                this.persistLocalCategories();
+            }
+        } else {
+            categoryId = matchedCat.id;
         }
 
-        const newHabit: Habit = {
-            id: Date.now(),
-            name,
-            description: template.desc,
-            category: template.category,
-            frequency: template.freq,
-            color: template.color,
-            createdAt: this.getTodayStr(),
-            completions: [this.getTodayStr()]
-        };
+        const todayStr = this.getTodayStr();
 
-        this.habits.unshift(newHabit);
-        this.saveHabits();
+        if (this.usesCloud()) {
+            const { data: habitData, error } = await supabase.from('habits').insert({
+                user_id: this.authUser!.id,
+                category_id: categoryId,
+                name: template.name,
+                description: template.desc,
+                frequency: template.freq,
+                color: normalizeHexColor(template.color)
+            }).select('id, created_at').single();
+
+            if (error || !habitData) {
+                this.showToast(error?.message || 'Failed to add habit', 'error');
+                return;
+            }
+
+            // Log completion for today
+            await supabase.from('habit_completions').insert({
+                habit_id: habitData.id,
+                user_id: this.authUser!.id,
+                completed_on: todayStr
+            });
+
+            const newHabit: Habit = {
+                id: habitData.id,
+                name: template.name,
+                description: template.desc,
+                category: template.category,
+                categoryId: categoryId,
+                frequency: template.freq,
+                color: template.color,
+                createdAt: (habitData.created_at || '').slice(0, 10) || todayStr,
+                completions: [todayStr]
+            };
+
+            this.habits.unshift(newHabit);
+        } else {
+            const newHabit: Habit = {
+                id: createId(),
+                name: template.name,
+                description: template.desc,
+                category: template.category,
+                categoryId: categoryId,
+                frequency: template.freq,
+                color: template.color,
+                createdAt: todayStr,
+                completions: [todayStr]
+            };
+
+            this.habits.unshift(newHabit);
+            this.persistLocalHabits();
+        }
+
         this.render();
-        this.showToast(`Added habit: "${newHabit.name}"!`, 'success');
+        this.showToast(`Added habit: "${template.name}"!`, 'success');
         this.triggerConfetti();
     }
 
@@ -803,9 +1417,8 @@ export class HabitTrackerApp {
     }
 
     public calculateStreak(habit: Habit): number {
+        const uniqueDates = habit.completions || [];
         if (!habit.completions || habit.completions.length === 0) return 0;
-
-        const uniqueDates = Array.from(new Set(habit.completions)).sort().reverse();
         const todayStr = this.getTodayStr();
         const yesterdayDate = new Date();
         yesterdayDate.setDate(yesterdayDate.getDate() - 1);
@@ -901,10 +1514,10 @@ export class HabitTrackerApp {
 
             return `
                 <div class="category-item-row ${isActive ? 'active' : ''}">
-                    <button class="category-btn" onclick="tracker.setCategoryFilter('${cat.name}')">
+                    <button class="category-btn" onclick="tracker.setCategoryFilter('${this.escapeHtml(cat.name)}')">
                         <div class="category-btn-left">
                             <span class="cat-icon-svg" style="color: ${cat.color};">${iconSvg}</span>
-                            <span>${cat.name}</span>
+                            <span>${this.escapeHtml(cat.name)}</span>
                         </div>
                         <span class="category-pill-count">${counts[cat.name] || 0}</span>
                     </button>
@@ -927,6 +1540,14 @@ export class HabitTrackerApp {
         this.selectedCategory = catName;
         this.renderCategorySidebar();
         this.renderHabitsGrid();
+        this.closeMobileMenu();
+    }
+
+    private closeMobileMenu(): void {
+        const sidebarNav = document.getElementById('sidebarNav');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        if (sidebarNav) sidebarNav.classList.remove('show');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('show');
     }
 
     public editCategoryById(id: string): void {
@@ -939,7 +1560,7 @@ export class HabitTrackerApp {
         if (!select) return;
 
         select.innerHTML = this.categories.map(cat => `
-            <option value="${cat.name}">${cat.name}</option>
+            <option value="${this.escapeHtml(cat.name)}">${this.escapeHtml(cat.name)}</option>
         `).join('');
     }
 
@@ -1014,7 +1635,7 @@ export class HabitTrackerApp {
             if (this.sortOrder === 'name') return a.name.localeCompare(b.name);
             if (this.sortOrder === 'category') return (a.category || '').localeCompare(b.category || '');
             if (this.sortOrder === 'rate') return (b.completions?.length || 0) - (a.completions?.length || 0);
-            if (this.sortOrder === 'newest') return b.id - a.id;
+            if (this.sortOrder === 'newest') return (b.createdAt || '').localeCompare(a.createdAt || '');
             return 0;
         });
     }
@@ -1076,7 +1697,7 @@ export class HabitTrackerApp {
         grid.innerHTML = filtered.map(habit => {
             const isCompletedToday = habit.completions.includes(todayStr);
             const streak = this.calculateStreak(habit);
-            const catObj = this.categories.find(c => c.name === habit.category) || { name: habit.category, icon: 'target', color: '#4f46e5' };
+            const catObj = this.categories.find(c => c.name === habit.category || c.id === habit.categoryId) || { name: habit.category, icon: 'target', color: '#4f46e5' };
             const iconSvg = SVG_ICONS[catObj.icon] || SVG_ICONS['target'];
             const cardAccent = habit.color || catObj.color;
 
@@ -1089,7 +1710,7 @@ export class HabitTrackerApp {
                     <button type="button" 
                             class="day-pill ${day.isToday ? 'today' : ''} ${isChecked ? 'completed' : ''}" 
                             title="${day.dateStr}${day.isToday ? ' (Today)' : ''}"
-                            onclick="tracker.toggleDateCompletion(${habit.id}, '${day.dateStr}')">
+                            onclick="tracker.toggleDateCompletion('${habit.id}', '${day.dateStr}')">
                         <span class="day-name">${day.dayName}</span>
                         <div class="day-check-indicator">${isChecked ? '✓' : ''}</div>
                     </button>
@@ -1111,13 +1732,13 @@ export class HabitTrackerApp {
                         </div>
 
                         <div class="habit-actions-menu">
-                            <button class="card-menu-btn" title="Edit Habit" onclick="tracker.editHabit(${habit.id})">
+                            <button class="card-menu-btn" title="Edit Habit" onclick="tracker.editHabit('${habit.id}')">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </button>
-                            <button class="card-menu-btn" title="Delete Habit" onclick="tracker.deleteHabit(${habit.id})">
+                            <button class="card-menu-btn" title="Delete Habit" onclick="tracker.deleteHabit('${habit.id}')">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="3 6 5 6 21 6"></polyline>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1147,7 +1768,7 @@ export class HabitTrackerApp {
                         </div>
 
                         <button class="check-in-btn ${isCompletedToday ? 'checked' : ''}" 
-                                onclick="tracker.toggleToday(${habit.id})">
+                                onclick="tracker.toggleToday('${habit.id}')">
                             ${isCompletedToday ? '✓ Done' : '+ Check In'}
                         </button>
                     </div>
@@ -1156,28 +1777,65 @@ export class HabitTrackerApp {
         }).join('');
     }
 
-    public toggleToday(habitId: number): void {
+    public toggleToday(habitId: string): void {
         const todayStr = this.getTodayStr();
         this.toggleDateCompletion(habitId, todayStr);
     }
 
-    public toggleDateCompletion(habitId: number, dateStr: string): void {
+    public async toggleDateCompletion(habitId: string, dateStr: string): Promise<void> {
         const habit = this.habits.find(h => h.id === habitId);
         if (!habit) return;
 
         const index = habit.completions.indexOf(dateStr);
         const wasCompleted = index > -1;
 
-        if (wasCompleted) {
-            habit.completions.splice(index, 1);
-            this.showToast(`Unchecked "${habit.name}" for ${dateStr}`);
+        if (this.usesCloud()) {
+            if (wasCompleted) {
+                const { error } = await supabase
+                    .from('habit_completions')
+                    .delete()
+                    .eq('habit_id', habitId)
+                    .eq('completed_on', dateStr)
+                    .eq('user_id', this.authUser!.id);
+
+                if (error) {
+                    this.showToast(error.message, 'error');
+                    return;
+                }
+
+                habit.completions.splice(index, 1);
+                this.showToast(`Unchecked "${habit.name}" for ${dateStr}`);
+            } else {
+                const { error } = await supabase
+                    .from('habit_completions')
+                    .insert({
+                        habit_id: habitId,
+                        user_id: this.authUser!.id,
+                        completed_on: dateStr
+                    });
+
+                if (error) {
+                    this.showToast(error.message, 'error');
+                    return;
+                }
+
+                habit.completions.push(dateStr);
+                this.showToast(`✓ Completed "${habit.name}"!`, 'success');
+                if (dateStr === this.getTodayStr()) this.triggerConfetti();
+            }
         } else {
-            habit.completions.push(dateStr);
-            this.showToast(`✓ Completed "${habit.name}"!`, 'success');
-            this.triggerConfetti();
+            // Local mode
+            if (wasCompleted) {
+                habit.completions.splice(index, 1);
+                this.showToast(`Unchecked "${habit.name}" for ${dateStr}`);
+            } else {
+                habit.completions.push(dateStr);
+                this.showToast(`✓ Completed "${habit.name}"!`, 'success');
+                if (dateStr === this.getTodayStr()) this.triggerConfetti();
+            }
+            this.persistLocalHabits();
         }
 
-        this.saveHabits();
         this.render();
     }
 
@@ -1191,7 +1849,7 @@ export class HabitTrackerApp {
 
         if (habitToEdit) {
             if (title) title.textContent = 'Edit Habit';
-            (document.getElementById('editHabitId') as HTMLInputElement).value = habitToEdit.id.toString();
+            (document.getElementById('editHabitId') as HTMLInputElement).value = habitToEdit.id;
             (document.getElementById('habitName') as HTMLInputElement).value = habitToEdit.name;
             (document.getElementById('habitDescription') as HTMLInputElement).value = habitToEdit.description || '';
             (document.getElementById('habitCategorySelect') as HTMLSelectElement).value = habitToEdit.category;
@@ -1227,55 +1885,126 @@ export class HabitTrackerApp {
         document.getElementById('habitModal')?.classList.remove('show');
     }
 
-    private handleHabitSubmit(e: Event): void {
+    private async handleHabitSubmit(e: Event): Promise<void> {
         e.preventDefault();
 
         const editId = (document.getElementById('editHabitId') as HTMLInputElement).value;
         const name = (document.getElementById('habitName') as HTMLInputElement).value.trim();
         const description = (document.getElementById('habitDescription') as HTMLInputElement).value.trim();
-        const category = (document.getElementById('habitCategorySelect') as HTMLSelectElement).value;
+        const categoryName = (document.getElementById('habitCategorySelect') as HTMLSelectElement).value;
         const frequency = (document.getElementById('habitFrequency') as HTMLSelectElement).value as HabitFrequency;
         const color = (document.getElementById('habitColor') as HTMLInputElement).value;
 
         if (!name) return;
 
-        if (editId) {
-            const habit = this.habits.find(h => h.id === Number(editId));
-            if (habit) {
-                habit.name = name;
-                habit.description = description;
-                habit.category = category;
-                habit.frequency = frequency;
-                habit.color = color;
+        const catObj = this.categories.find(c => c.name === categoryName);
+        const categoryId = catObj ? catObj.id : null;
+
+        if (this.usesCloud()) {
+            if (editId) {
+                const { error } = await supabase
+                    .from('habits')
+                    .update({
+                        name,
+                        description: description || null,
+                        category_id: categoryId,
+                        frequency,
+                        color: normalizeHexColor(color),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', editId);
+
+                if (error) {
+                    this.showToast(error.message, 'error');
+                    return;
+                }
+
+                const habit = this.habits.find(h => h.id === editId);
+                if (habit) {
+                    habit.name = name;
+                    habit.description = description;
+                    habit.category = categoryName;
+                    habit.categoryId = categoryId;
+                    habit.frequency = frequency;
+                    habit.color = color;
+                }
                 this.showToast(`Updated habit "${name}"`, 'success');
+            } else {
+                const { data, error } = await supabase
+                    .from('habits')
+                    .insert({
+                        user_id: this.authUser!.id,
+                        category_id: categoryId,
+                        name,
+                        description: description || null,
+                        frequency,
+                        color: normalizeHexColor(color)
+                    })
+                    .select('id, created_at')
+                    .single();
+
+                if (error || !data) {
+                    this.showToast(error?.message || 'Failed to create habit', 'error');
+                    return;
+                }
+
+                const newHabit: Habit = {
+                    id: data.id,
+                    name,
+                    description,
+                    category: categoryName,
+                    categoryId,
+                    frequency,
+                    color,
+                    createdAt: (data.created_at || '').slice(0, 10) || this.getTodayStr(),
+                    completions: []
+                };
+                this.habits.unshift(newHabit);
+                this.showToast(`Created habit "${name}"!`, 'success');
+                this.triggerConfetti();
             }
         } else {
-            const newHabit: Habit = {
-                id: Date.now(),
-                name,
-                description,
-                category,
-                frequency,
-                color,
-                createdAt: this.getTodayStr(),
-                completions: []
-            };
-            this.habits.unshift(newHabit);
-            this.showToast(`Created habit "${name}"!`, 'success');
-            this.triggerConfetti();
+            // Local mode
+            if (editId) {
+                const habit = this.habits.find(h => h.id === editId);
+                if (habit) {
+                    habit.name = name;
+                    habit.description = description;
+                    habit.category = categoryName;
+                    habit.categoryId = categoryId;
+                    habit.frequency = frequency;
+                    habit.color = color;
+                    this.showToast(`Updated habit "${name}"`, 'success');
+                }
+            } else {
+                const newHabit: Habit = {
+                    id: createId(),
+                    name,
+                    description,
+                    category: categoryName,
+                    categoryId,
+                    frequency,
+                    color,
+                    createdAt: this.getTodayStr(),
+                    completions: []
+                };
+                this.habits.unshift(newHabit);
+                this.showToast(`Created habit "${name}"!`, 'success');
+                this.triggerConfetti();
+            }
+            this.persistLocalHabits();
         }
 
-        this.saveHabits();
         this.closeHabitModal();
         this.render();
     }
 
-    public editHabit(id: number): void {
+    public editHabit(id: string): void {
         const habit = this.habits.find(h => h.id === id);
         if (habit) this.openHabitModal(habit);
     }
 
-    public async deleteHabit(id: number): Promise<void> {
+    public async deleteHabit(id: string): Promise<void> {
         const habit = this.habits.find(h => h.id === id);
         if (!habit) return;
 
@@ -1287,12 +2016,20 @@ export class HabitTrackerApp {
             type: 'danger'
         });
 
-        if (confirmed) {
-            this.habits = this.habits.filter(h => h.id !== id);
-            this.saveHabits();
-            this.render();
-            this.showToast(`Deleted habit "${habit.name}"`);
+        if (!confirmed) return;
+
+        if (this.usesCloud()) {
+            const { error } = await supabase.from('habits').delete().eq('id', id);
+            if (error) {
+                this.showToast(error.message, 'error');
+                return;
+            }
         }
+
+        this.habits = this.habits.filter(h => h.id !== id);
+        if (!this.usesCloud()) this.persistLocalHabits();
+        this.render();
+        this.showToast(`Deleted habit "${habit.name}"`);
     }
 
     public async clearAllHabits(): Promise<void> {
@@ -1304,12 +2041,20 @@ export class HabitTrackerApp {
             type: 'danger'
         });
 
-        if (confirmed) {
-            this.habits = [];
-            this.saveHabits();
-            this.render();
-            this.showToast('Cleared all habits.');
+        if (!confirmed) return;
+
+        if (this.usesCloud()) {
+            const { error } = await supabase.from('habits').delete().eq('user_id', this.authUser!.id);
+            if (error) {
+                this.showToast(error.message, 'error');
+                return;
+            }
         }
+
+        this.habits = [];
+        if (!this.usesCloud()) this.persistLocalHabits();
+        this.render();
+        this.showToast('Cleared all habits.');
     }
 
     public openAnalyticsModal(): void {
@@ -1364,7 +2109,7 @@ export class HabitTrackerApp {
             const streak = this.calculateStreak(habit);
             const bestStreak = this.calculateBestStreak(habit);
             const completionRate = Math.min(100, Math.round((habit.completions.length / 30) * 100));
-            const catObj = this.categories.find(c => c.name === habit.category) || { color: '#4f46e5' };
+            const catObj = this.categories.find(c => c.name === habit.category || c.id === habit.categoryId) || { color: '#4f46e5' };
             const barColor = habit.color || catObj.color;
 
             return `
@@ -1447,12 +2192,13 @@ export class HabitTrackerApp {
         }
     }
 
-    public showToast(message: string, type: 'normal' | 'success' = 'normal'): void {
+    public showToast(message: string, type: 'normal' | 'success' | 'error' = 'normal'): void {
         const container = document.getElementById('toastContainer');
         if (!container) return;
 
         const toast = document.createElement('div');
-        toast.className = `toast ${type === 'success' ? 'toast-success' : ''}`;
+        const typeClass = type === 'success' ? 'toast-success' : (type === 'error' ? 'toast-error' : '');
+        toast.className = `toast ${typeClass}`.trim();
         toast.textContent = message;
 
         container.appendChild(toast);
@@ -1462,7 +2208,7 @@ export class HabitTrackerApp {
             toast.style.transform = 'translateY(10px)';
             toast.style.transition = 'all 0.3s ease';
             setTimeout(() => toast.remove(), 300);
-        }, 2600);
+        }, 3200);
     }
 }
 

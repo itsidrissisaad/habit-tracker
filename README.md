@@ -168,12 +168,14 @@ Also handled:
 
 ```
 habit-tracker/
-├── index.html      # Semantic HTML5 — modals, layouts, accessible structure
-├── style.css       # CSS design system — custom properties, light-mode tokens, elevation
-├── script.js       # Production-ready vanilla JavaScript engine
-├── script.ts       # Strongly typed TypeScript source with interfaces & models
-├── favicon.svg     # SVG favicon — matches the brand logo exactly
-└── README.md       # Project documentation & showcase
+├── index.html          # Semantic HTML5 — modals, layouts, accessible structure
+├── style.css           # CSS design system — custom properties, light-mode tokens
+├── script.ts           # Strongly typed TypeScript core engine & Supabase cloud sync
+├── supabaseClient.ts   # Supabase client with PKCE auth & resilience
+├── supabase_schema.sql # Complete PostgreSQL migration script for Supabase
+├── favicon.svg         # SVG favicon — matches the brand logo exactly
+├── .env.example        # Template for Supabase environment variables
+└── README.md           # Project documentation & showcase
 ```
 
 ---
@@ -182,6 +184,7 @@ habit-tracker/
 
 ```typescript
 interface UserProfile {
+    id?: string;
     name: string;
     email: string;
     avatarColor: string;
@@ -196,10 +199,11 @@ interface CustomCategory {
 }
 
 interface Habit {
-    id: number;
+    id: string;
     name: string;
     description?: string;
     category: string;
+    categoryId?: string | null;
     frequency: 'daily' | 'weekly' | 'monthly';
     color: string;
     createdAt: string;
@@ -211,27 +215,28 @@ interface Habit {
 
 ## ⚡ Quick Start
 
-Zero build tooling required. Works straight from the file system.
-
 **1. Clone the repository**
 ```bash
 git clone git@github.com:itsidrissisaad/habit-tracker.git
 cd habit-tracker
 ```
 
-**2a. Open directly in browser**
+**2. Configure Environment (Optional for Supabase Cloud Sync)**
 ```bash
-# macOS
-open index.html
-
-# Linux
-xdg-open index.html
+cp .env.example .env.local
+# Edit .env.local with your Supabase URL & publishable key
 ```
 
-**2b. Or serve locally**
+**3. Install and Run with Vite**
 ```bash
-python3 -m http.server 8000
-# → http://localhost:8000
+npm install
+npm run dev
+# → http://localhost:3000
+```
+
+**4. Production Build**
+```bash
+npm run build
 ```
 
 ---
@@ -242,13 +247,15 @@ python3 -m http.server 8000
 |-------|-----------|
 | Markup | HTML5 — Semantic, accessible, ARIA-ready |
 | Styles | CSS3 — Custom properties, Flexbox, Grid, responsive breakpoints |
-| Logic | Vanilla ES2022 JavaScript (no bundler) |
-| Types | TypeScript 5 — Strict interfaces & types |
+| Logic | TypeScript 5 + Modern ES2022 JavaScript |
+| Backend | Supabase (PostgreSQL, Row Level Security, Auth PKCE) |
+| Fallback | Browser `localStorage` for offline/guest mode |
+| Tooling | Vite 7 & esbuild |
 | Icons | Inline vector SVG — crisp at any resolution |
 | Fonts | Plus Jakarta Sans (Google Fonts) |
-| Storage | Browser `localStorage` — zero server required |
 | Animation | Native Canvas API confetti engine |
 
 ---
+
 
 

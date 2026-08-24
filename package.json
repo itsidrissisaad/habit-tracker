@@ -1,8 +1,18 @@
 {
-  "devDependencies": {
-    "supabase": "^2.115.0"
+  "name": "habit-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3"
+  },
+  "devDependencies": {
+    "supabase": "^2.115.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3"
   }
 }

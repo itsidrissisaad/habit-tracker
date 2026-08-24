@@ -5,9 +5,18 @@
 --  Version : 1.0.0
 -- ============================================================
 
+-- ============================================================
+-- 0. CLEANUP (Ensures script can be re-run safely)
+-- ============================================================
+DROP TABLE IF EXISTS public.weekly_stats CASCADE;
+DROP TABLE IF EXISTS public.habit_streaks CASCADE;
+DROP TABLE IF EXISTS public.habit_completions CASCADE;
+DROP TABLE IF EXISTS public.habits CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
 
 -- ============================================================
--- 0. EXTENSIONS
+-- 1. EXTENSIONS
 -- ============================================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";   -- uuid_generate_v4()
 CREATE EXTENSION IF NOT EXISTS "pg_stat_statements"; -- query analytics
@@ -59,6 +68,7 @@ COMMENT ON COLUMN public.categories.icon_key IS 'Key into the SVG_ICONS dictiona
 -- 3. HABITS
 --    Core habit records with frequency, color, and metadata.
 -- ============================================================
+DROP TYPE IF EXISTS habit_frequency CASCADE;
 CREATE TYPE habit_frequency AS ENUM ('daily', 'weekly', 'monthly');
 
 CREATE TABLE public.habits (
@@ -166,7 +176,8 @@ COMMENT ON COLUMN public.weekly_stats.adherence_pct IS 'Computed: (completions /
 -- ============================================================
 
 -- 7a. Per-habit analytics summary (used on the analytics modal)
-CREATE OR REPLACE VIEW public.v_habit_analytics AS
+CREATE OR REPLACE VIEW public.v_habit_analytics
+WITH (security_invoker = true) AS
 SELECT
     h.id                                            AS habit_id,
     h.user_id,
@@ -208,7 +219,8 @@ COMMENT ON VIEW public.v_habit_analytics IS 'Per-habit analytics summary: streak
 
 
 -- 7b. User-level daily dashboard summary (metrics cards)
-CREATE OR REPLACE VIEW public.v_user_daily_summary AS
+CREATE OR REPLACE VIEW public.v_user_daily_summary
+WITH (security_invoker = true) AS
 SELECT
     h.user_id,
     CURRENT_DATE                                            AS report_date,
@@ -238,7 +250,8 @@ COMMENT ON VIEW public.v_user_daily_summary IS 'Aggregated KPI metrics per user 
 
 
 -- 7c. 30-day heatmap data (GitHub-style activity grid)
-CREATE OR REPLACE VIEW public.v_activity_heatmap AS
+CREATE OR REPLACE VIEW public.v_activity_heatmap
+WITH (security_invoker = true) AS
 SELECT
     hc.user_id,
     hc.completed_on,
@@ -443,6 +456,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_create_profile_on_signup ON auth.users;
 CREATE TRIGGER trg_create_profile_on_signup
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.fn_create_profile_on_signup();
@@ -581,8 +595,15 @@ CREATE POLICY "System manages weekly stats updates"
 
 -- Soft-archive a habit (preserves all history)
 CREATE OR REPLACE FUNCTION public.archive_habit(p_habit_id UUID)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
 BEGIN
+    IF auth.uid() IS NULL THEN
+        RAISE EXCEPTION 'Unauthorized';
+    END IF;
     UPDATE public.habits
     SET    is_archived = TRUE,
            updated_at  = NOW()
@@ -591,9 +612,14 @@ BEGIN
 END;
 $$;
 
--- Get a user's 7-day consistency score (0-100)
-CREATE OR REPLACE FUNCTION public.get_consistency_score_7d(p_user_id UUID)
-RETURNS NUMERIC LANGUAGE sql STABLE SECURITY DEFINER AS $$
+-- Get the authenticated user's 7-day consistency score (0-100)
+CREATE OR REPLACE FUNCTION public.get_consistency_score_7d()
+RETURNS NUMERIC
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
     SELECT ROUND(
         COUNT(hc.id)::NUMERIC
         / NULLIF(COUNT(DISTINCT h.id) * 7, 0) * 100, 1
@@ -602,20 +628,34 @@ RETURNS NUMERIC LANGUAGE sql STABLE SECURITY DEFINER AS $$
     LEFT JOIN public.habit_completions hc
            ON hc.habit_id    = h.id
           AND hc.completed_on >= CURRENT_DATE - 6
-    WHERE h.user_id     = p_user_id
+    WHERE h.user_id     = auth.uid()
     AND   h.is_archived = FALSE;
 $$;
 
--- Bulk-delete all habits for a user (Clear All from the dashboard)
-CREATE OR REPLACE FUNCTION public.clear_all_habits(p_user_id UUID)
-RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+-- Bulk-delete all habits for the authenticated user (Clear All from the dashboard)
+CREATE OR REPLACE FUNCTION public.clear_all_habits()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $$
 BEGIN
-    IF auth.uid() <> p_user_id THEN
+    IF auth.uid() IS NULL THEN
         RAISE EXCEPTION 'Unauthorized';
     END IF;
-    DELETE FROM public.habits WHERE user_id = p_user_id;
+    DELETE FROM public.habits WHERE user_id = auth.uid();
 END;
 $$;
+
+-- Revoke execute permissions from public/anon and grant to authenticated
+REVOKE ALL ON FUNCTION public.archive_habit(UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.get_consistency_score_7d() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.clear_all_habits() FROM PUBLIC, anon;
+
+GRANT EXECUTE ON FUNCTION public.archive_habit(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_consistency_score_7d() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.clear_all_habits() TO authenticated;
+
 
 
 -- ============================================================
