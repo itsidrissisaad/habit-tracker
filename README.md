@@ -215,29 +215,100 @@ interface Habit {
 
 ## ⚡ Quick Start
 
-**1. Clone the repository**
-```bash
-git clone git@github.com:itsidrissisaad/habit-tracker.git
-cd habit-tracker
-```
+You can run the Habit Tracker in three different modes depending on your requirements:
 
-**2. Configure Environment (Optional for Supabase Cloud Sync)**
-```bash
-cp .env.example .env.local
-# Edit .env.local with your Supabase URL & publishable key
-```
+### Option A: Local Guest Mode (Zero Configuration)
 
-**3. Install and Run with Vite**
-```bash
-npm install
-npm run dev
-# → http://localhost:3000
-```
+If no environment variables are configured, the app automatically falls back to guest mode using the browser's `localStorage`.
 
-**4. Production Build**
-```bash
-npm run build
-```
+1. **Clone the repository**
+   ```bash
+   git clone git@github.com:itsidrissisaad/habit-tracker.git
+   cd habit-tracker
+   ```
+2. **Install and run**
+   ```bash
+   npm install
+   npm run dev
+   # → Open http://localhost:3000 in your browser
+   ```
+
+---
+
+### Option B: Cloud Sync Mode (Supabase Cloud)
+
+To enable cloud backup, sync, and user authentication with a hosted Supabase project:
+
+1. **Prepare Environment Variables**
+   ```bash
+   cp .env.example .env.local
+   ```
+2. **Configure Credentials**
+   Open `.env.local` and fill in your Supabase project credentials (retrieved from your Supabase Dashboard under Project Settings -> API):
+   ```env
+   VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-or-publishable-key
+   ```
+3. **Database Setup**
+   Run the schema script found in [supabase_schema.sql](./supabase_schema.sql) in your Supabase project's SQL Editor to set up the tables, views, and functions.
+4. **Install and run**
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+---
+
+### Option C: Local Dev Mode (Supabase CLI)
+
+For running both the application and the Supabase backend entirely on your local machine using Docker:
+
+1. **Ensure Docker is running** on your system.
+2. **Start the local Supabase environment**
+   ```bash
+   npx supabase start
+   ```
+   This will boot the database, Auth server, Studio, and API gateway locally.
+3. **Apply Database Migrations**
+   ```bash
+   npx supabase db reset
+   ```
+   This applies the migration files found in the [supabase/migrations/](./supabase/migrations/) directory to your local database.
+4. **Configure Environment Variables**
+   Create a `.env.local` file pointing to your local Supabase endpoints (displayed in the terminal after running `supabase start`):
+   ```env
+   VITE_SUPABASE_URL=http://localhost:54321
+   VITE_SUPABASE_PUBLISHABLE_KEY=your-local-anon-key
+   ```
+5. **Install and run**
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+---
+
+## 🔒 Security & Secrets Management
+
+To maintain application security and protect user data, please adhere to the following environment and security policies:
+
+### ⚠️ Secret Key Discipline
+- **Public Keys**: Variables prefixed with `VITE_` (e.g., `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`) are bundled into the production client-side JavaScript. They are visible to anyone inspecting the website's source code. Only public-facing keys (like the Supabase `anon` key) should use the `VITE_` prefix.
+- **Private Keys**: Database master keys, service role keys (`service_role`), or integration API tokens (e.g., `SUPABASE_SECRET_KEY`) **must never** have the `VITE_` prefix and **must never** be imported or referenced in client-side code. They are stored in `.env.local` solely for local CLI commands and migrations.
+
+### 🚫 Git Exclusion Policies
+To prevent accidental secrets disclosure, the project enforces Git exclusions in the [.gitignore](./.gitignore) file:
+- `.env.local` and `.env.*.local` are explicitly ignored.
+- Only `.env.example` (containing dummy values) is tracked to serve as a setup template.
+- Always run `git status` before committing to verify no configuration or key files are staged.
+
+### 🧹 Cleaning Historical Leaks
+If a credential (such as the client anon key or project URL) was committed to Git history:
+1. **Rotate Keys**: Immediately go to your Supabase Dashboard -> Project Settings -> API and roll/rotate the compromised key.
+2. **Purge History**: Use `git-filter-repo` (recommended) or `git filter-branch` to wipe the secret from the repository's history before pushing to public remotes:
+   ```bash
+   git filter-repo --invert-paths --path .env.local
+   ```
 
 ---
 
@@ -255,7 +326,6 @@ npm run build
 | Fonts | Plus Jakarta Sans (Google Fonts) |
 | Animation | Native Canvas API confetti engine |
 
----
 
 
 
